@@ -12,7 +12,7 @@ from waffle_utils.data.formats import DetAnn
 
 dt = DT()
 
-img_id = dt.add_image(image_path="imgs/apple.png")
+img_id = dt.add_image(image_path="images/apple.png")
 cat_id = dt.add_category(supercategory=None, name="apple")
 ann_id = dt.add_annotation(
     img_id,
@@ -30,15 +30,28 @@ bbox.cxcywh  # [150, 150, 100, 100]
 bbox.aspect_ratio  # 1
 bbox.area  # 10000
 
-dt.export("save_dir", DT.YOLO_FORMAT)
-dt.export("save_dir", DT.COCO_FORMAT)
+dt.export("save_dir", DT.YOLO_DETECTION)
+"""
+save_dir/
+    images/
+        apple.png
+    annotations.json
+"""
+dt.export("save_dir", DT.COCO_DETECTION)
+"""
+save_dir/
+    images/
+        apple.png
+    labels/
+        apple.txt
+"""
 ```
 ### Format Converting
 ```python
 from waffle_utils.data import DataTools as DT
 
-dt = DT.from_directory("save_dir", DT.YOLO_FORMAT)
-dt.export("save_dir", DT.COCO_FORMAT)
+dt = DT.from_directory("save_dir", DT.YOLO_DETECTION)
+dt.export("save_dir", DT.COCO_DETECTION)
 ```
 
 ### CLI
