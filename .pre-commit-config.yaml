@@ -54,4 +54,4 @@ repos:
     hooks:
       - id: flake8
         name: PEP8
-        args: [--ignore=E501]
+        args: ["--ignore=E501,E741"]
