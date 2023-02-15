@@ -1,7 +1,9 @@
-from .annotation import Annotation
+from .fields import Annotation, Category, Image
 
 __all__ = [
     "Annotation",
+    "Image",
+    "Category",
 ]
 
 # enums
