@@ -1,6 +1,6 @@
-from waffle_utils.data_tools.fields import Annotation as A
-from waffle_utils.data_tools.fields import Category as C
-from waffle_utils.data_tools.fields import Image as I
+from waffle_utils.dataset.fields import Annotation as A
+from waffle_utils.dataset.fields import Category as C
+from waffle_utils.dataset.fields import Image as I
 
 
 def test_annotations():
