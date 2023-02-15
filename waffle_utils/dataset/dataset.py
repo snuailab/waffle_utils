@@ -3,8 +3,8 @@ from pathlib import Path
 
 from waffle_utils.utils import type_validator
 
-from . import Format
 from .fields import Annotation, Category, Image
+from .format import Format
 
 
 class Dataset:

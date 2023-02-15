@@ -1,6 +1,6 @@
 from waffle_utils.utils import type_validator
 
-from . import BaseField
+from .base_field import BaseField
 
 
 class Annotation(BaseField):
