@@ -1,3 +1,9 @@
+from .annotation import Annotation
+
+__all__ = [
+    "Annotation",
+]
+
 # enums
 YOLO_CLASSIFICATION = 10
 YOLO_DETECTION = 11
