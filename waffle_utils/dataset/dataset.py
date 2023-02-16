@@ -12,8 +12,9 @@ class Dataset:
     DEFAULT_DATASET_ROOT_DIR = Path("./datasets")
     RAW_IMAGE_DIR = Path("raw")
     IMAGE_DIR = Path("images")
-    LABEL_DIR = Path("labels")
+    ANNOTATION_DIR = Path("labels")
     CATEGORY_DIR = Path("categories")
+    EXPORT_DIR = Path("exports")
     SET_DIR = Path("sets")
 
     def __init__(
@@ -59,12 +60,16 @@ class Dataset:
         return self.dataset_dir / Dataset.IMAGE_DIR
 
     @cached_property
-    def label_dir(self) -> Path:
-        return self.dataset_dir / Dataset.LABEL_DIR
+    def annotation_dir(self) -> Path:
+        return self.dataset_dir / Dataset.ANNOTATION_DIR
 
     @cached_property
     def category_dir(self) -> Path:
         return self.dataset_dir / Dataset.CATEGORY_DIR
+
+    @cached_property
+    def export_dir(self) -> Path:
+        return self.dataset_dir / Dataset.EXPORT_DIR
 
     @cached_property
     def set_dir(self) -> Path:
@@ -122,12 +127,25 @@ class Dataset:
         coco_root_dir: str,
         root_dir: str = None,
     ) -> "Dataset":
-        raise NotImplementedError
         ds = cls(name, root_dir)
-        if not ds.initialized():
-            raise FileNotFoundError(
-                f'{ds.dataset_dir} has not been created. Run Dataset.new("{name}") first.'
+        if ds.initialized():
+            raise FileExistsError(
+                f"{ds.dataset_dir} already exists. try another name."
             )
+        ds.initialize()
+
+        # parse coco annotation file
+        coco = io.load_json(coco_file)
+        ds.add_imgs([Image.from_dict(image) for image in coco["images"]])
+        ds.add_anns(
+            [
+                Annotation.from_dict(annotation)
+                for annotation in coco["annotations"]
+            ]
+        )
+        ds.add_cats(
+            [Category.from_dict(category) for category in coco["categories"]]
+        )
 
         # copy raw images
         io.copy_files_to_directory(coco_root_dir, ds.raw_image_dir)
@@ -155,17 +173,15 @@ class Dataset:
     def initialize(self):
         io.create_directory(self.raw_image_dir)
         io.create_directory(self.image_dir)
-        io.create_directory(self.label_dir)
+        io.create_directory(self.annotation_dir)
         io.create_directory(self.category_dir)
-        io.create_directory(self.set_dir)
 
     def initialized(self):
         return (
             self.raw_image_dir.exists()
             and self.image_dir.exists()
-            and self.label_dir.exists()
+            and self.annotation_dir.exists()
             and self.category_dir.exists()
-            and self.set_dir.exists()
         )
 
     # get
@@ -179,14 +195,23 @@ class Dataset:
         pass
 
     # add
-    def add_imgs(self, imgs: Image):
-        pass
+    def add_imgs(self, images: list[Image]):
+        for item in images:
+            item_id = item.img_id
+            item_path = self.image_dir / f"{item_id}.json"
+            io.save_json(item.to_dict(), item_path)
 
-    def add_cats(self, cats: Category):
-        pass
+    def add_cats(self, categories: list[Category]):
+        for item in categories:
+            item_id = item.cat_id
+            item_path = self.category_dir / f"{item_id}.json"
+            io.save_json(item.to_dict(), item_path)
 
-    def add_anns(self, anns: Annotation):
-        pass
+    def add_anns(self, annotations: list[Annotation]):
+        for item in annotations:
+            item_id = item.ann_id
+            item_path = self.annotation_dir / f"{item_id}.json"
+            io.save_json(item.to_dict(), item_path)
 
     # export
     def export(self, export_format: Format) -> str:
