@@ -1,4 +1,4 @@
-from waffle_utils.file import io
+from waffle_utils.file import io, network
 
 
 def test_io():

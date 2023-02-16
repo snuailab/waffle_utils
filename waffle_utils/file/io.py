@@ -1,6 +1,7 @@
 import json
 import os
 import shutil
+import zipfile
 from pathlib import Path
 from typing import Any, Union
 
@@ -101,6 +102,7 @@ def copy_files_to_directory(
         FileNotFoundError: if dst is not exists. you can bypass this error with create_directory argument.
     """
 
+    src_list = None
     if isinstance(src, list):
         src_prefix = os.path.commonpath(src)
         src_list = list(map(Path, src))
@@ -114,7 +116,8 @@ def copy_files_to_directory(
             src = Path(src)
             src_list = src.glob("**/*")
             src_prefix = src
-    else:
+
+    if src_list is None:
         raise FileNotFoundError(f"unknown source {src}")
 
     dst = Path(dst)
@@ -137,7 +140,7 @@ def copy_files_to_directory(
             shutil.copy(src_file, dst_file)
 
 
-def create_directory(src: str):
+def make_directory(src: str):
     """Create Directory
 
     Args:
@@ -162,3 +165,12 @@ def remove_directory(src: str):
         src (str): file to remove
     """
     shutil.rmtree(str(src))
+
+
+def unzip(src: str, dst: str, create_directory: bool = False):
+
+    if create_directory:
+        make_directory(dst)
+
+    with zipfile.ZipFile(src, "r") as f:
+        f.extractall(dst)
