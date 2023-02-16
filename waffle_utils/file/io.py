@@ -18,7 +18,7 @@ def save_json(obj: Any, fp: Union[str, Path], create_directory: bool = False):
 
     fp = Path(fp)
     if create_directory:
-        fp.parent.mkdir(mode=666, parents=True, exist_ok=True)
+        fp.parent.mkdir(mode=0o766, parents=True, exist_ok=True)
 
     with open(fp, "w") as f:
         json.dump(obj, f, ensure_ascii=False, indent=4)
@@ -56,7 +56,7 @@ def save_yaml(obj: Any, fp: Union[str, Path], create_directory: bool = False):
 
     fp = Path(fp)
     if create_directory:
-        fp.parent.mkdir(mode=666, parents=True, exist_ok=True)
+        fp.parent.mkdir(mode=0o766, parents=True, exist_ok=True)
 
     with open(fp, "w") as f:
         yaml.safe_dump(obj, f, indent=4, sort_keys=False)
@@ -104,14 +104,16 @@ def copy_files_to_directory(
     if isinstance(src, list):
         src_prefix = os.path.commonpath(src)
         src_list = list(map(Path, src))
-    elif src.is_file():
+    elif isinstance(src, str) or isinstance(src, Path):
         src = Path(src)
-        src_list = [src]
-        src_prefix = src.parent
-    elif src.is_dir():
-        src = Path(src)
-        src_list = src.glob("**/*")
-        src_prefix = src
+        if src.is_file():
+            src = Path(src)
+            src_list = [src]
+            src_prefix = src.parent
+        elif src.is_dir():
+            src = Path(src)
+            src_list = src.glob("**/*")
+            src_prefix = src
     else:
         raise FileNotFoundError(f"unknown source {src}")
 
