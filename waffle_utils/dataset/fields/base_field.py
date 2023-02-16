@@ -18,3 +18,8 @@ class BaseField(ABC):
     @abstractmethod
     def from_dict(cls):
         pass
+
+    @classmethod
+    @abstractmethod
+    def from_json(cls):
+        pass

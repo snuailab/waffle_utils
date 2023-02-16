@@ -186,13 +186,21 @@ class Dataset:
 
     # get
     def get_imgs(self) -> list[Image]:
-        pass
+        return [
+            Image.from_json(f) for f in Path(self.image_dir).glob("*.json")
+        ]
 
     def get_cats(self) -> list[Category]:
-        pass
+        return [
+            Category.from_json(f)
+            for f in Path(self.category_dir).glob("*.json")
+        ]
 
     def get_anns(self) -> list[Annotation]:
-        pass
+        return [
+            Annotation.from_json(f)
+            for f in Path(self.annotation_dir).glob("*.json")
+        ]
 
     # add
     def add_imgs(self, images: list[Image]):
@@ -215,4 +223,11 @@ class Dataset:
 
     # export
     def export(self, export_format: Format) -> str:
-        pass
+        if export_format == Format.YOLO_DETECTION:
+            raise NotImplementedError
+        elif export_format == Format.YOLO_CLASSIFICATION:
+            raise NotImplementedError
+        elif export_format == Format.YOLO_SEGMENTATION:
+            raise NotImplementedError
+        elif export_format == Format.COCO_DETECTION:
+            raise NotImplementedError
