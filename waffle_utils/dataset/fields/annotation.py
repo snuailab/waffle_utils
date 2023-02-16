@@ -1,3 +1,4 @@
+from waffle_utils.file import io
 from waffle_utils.utils import type_validator
 
 from .base_field import BaseField
@@ -241,6 +242,19 @@ class Annotation(BaseField):
             value,
             iscrowd,
         )
+
+    @classmethod
+    def from_json(cls, f: str) -> "Annotation":
+        """Annotation Format from json file
+
+        Args:
+            d (dict): Annotation json file
+
+        Returns:
+            Annotation: Annotation class
+        """
+        d: dict = io.load_json(f)
+        return cls.from_dict(d)
 
     @classmethod
     def classification(

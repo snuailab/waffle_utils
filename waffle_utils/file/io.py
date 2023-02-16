@@ -19,7 +19,7 @@ def save_json(obj: Any, fp: Union[str, Path], create_directory: bool = False):
 
     fp = Path(fp)
     if create_directory:
-        fp.parent.mkdir(mode=0o766, parents=True, exist_ok=True)
+        make_directory(fp.parent)
 
     with open(fp, "w") as f:
         json.dump(obj, f, ensure_ascii=False, indent=4)
@@ -57,7 +57,7 @@ def save_yaml(obj: Any, fp: Union[str, Path], create_directory: bool = False):
 
     fp = Path(fp)
     if create_directory:
-        fp.parent.mkdir(mode=0o766, parents=True, exist_ok=True)
+        make_directory(fp.parent)
 
     with open(fp, "w") as f:
         yaml.safe_dump(obj, f, indent=4, sort_keys=False)
@@ -126,7 +126,7 @@ def copy_files_to_directory(
             f"dst should be directory format. but got {dst.suffix}"
         )
     elif create_directory:
-        dst.mkdir(mode=0o766, parents=True, exist_ok=True)
+        make_directory(dst)
 
     if not dst.exists():
         raise FileNotFoundError(
@@ -135,9 +135,31 @@ def copy_files_to_directory(
 
     for src_file in src_list:
         dst_file = Path(str(src_file).replace(str(src_prefix), str(dst)))
-        dst_file.parent.mkdir(mode=0o766, parents=True, exist_ok=True)
+        make_directory(dst_file.parent)
         if src_file.is_file():
             shutil.copy(src_file, dst_file)
+
+
+def copy_file(
+    src: Union[str, Path],
+    dst: Union[str, Path],
+    create_directory: bool = False,
+):
+    """Copy file
+
+    Args:
+        src (Union[str, Path]): source file path.
+        dst (Union[str, Path]): destination file path.
+        create_directory (bool, optional): create destination directory or not. Defaults to False.
+
+    Raises:
+    """
+    dst = Path(dst)
+
+    if create_directory:
+        make_directory(dst.parent)
+
+    shutil.copy(src, dst)
 
 
 def make_directory(src: str):

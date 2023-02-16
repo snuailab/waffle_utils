@@ -1,3 +1,4 @@
+from waffle_utils.file import io
 from waffle_utils.log import datetime_now
 from waffle_utils.utils import type_validator
 
@@ -122,6 +123,19 @@ class Image(BaseField):
             raise ValueError("height field missing")
 
         return cls(img_id, file_name, width, height, date_captured)
+
+    @classmethod
+    def from_json(cls, f: str) -> "Image":
+        """Image Format from json file
+
+        Args:
+            d (dict): Image json file
+
+        Returns:
+            Image: Image class
+        """
+        d: dict = io.load_json(f)
+        return cls.from_dict(d)
 
     def to_dict(self) -> dict:
         """Get Dictionary of Category

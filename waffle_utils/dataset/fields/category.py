@@ -1,3 +1,4 @@
+from waffle_utils.file import io
 from waffle_utils.utils import type_validator
 
 from . import BaseField
@@ -117,6 +118,19 @@ class Category(BaseField):
             raise ValueError("width field missing")
 
         return cls(cat_id, supercategory, name, keypoints, skeleton)
+
+    @classmethod
+    def from_json(cls, f: str) -> "Category":
+        """Category Format from json file
+
+        Args:
+            d (dict): Category json file
+
+        Returns:
+            Category: Category class
+        """
+        d: dict = io.load_json(f)
+        return cls.from_dict(d)
 
     @classmethod
     def classification(
