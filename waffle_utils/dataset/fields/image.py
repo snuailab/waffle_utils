@@ -74,7 +74,7 @@ class Image(BaseField):
             self._date_captured = v
 
     @classmethod
-    def image(
+    def new(
         cls,
         img_id: int,
         file_name: str,
@@ -94,6 +94,33 @@ class Image(BaseField):
         Returns:
             Image: image class
         """
+        return cls(img_id, file_name, width, height, date_captured)
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "Image":
+        """Image Format from dictionary
+
+        Args:
+            d (dict): Image dictionary
+
+        Returns:
+            Image: image class
+        """
+        img_id = d.get("id", None)
+        file_name = d.get("file_name", None)
+        width = d.get("width", None)
+        height = d.get("height", None)
+        date_captured = d.get("date_captured", datetime_now())
+
+        if img_id is None:
+            raise ValueError("id field missing")
+        if file_name is None:
+            raise ValueError("file_name field missing")
+        if width is None:
+            raise ValueError("width field missing")
+        if height is None:
+            raise ValueError("height field missing")
+
         return cls(img_id, file_name, width, height, date_captured)
 
     def to_dict(self) -> dict:
