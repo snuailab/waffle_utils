@@ -71,6 +71,54 @@ class Category(BaseField):
 
     # factories
     @classmethod
+    def new(
+        cls,
+        cat_id: int,
+        supercategory: str,
+        name: str,
+        keypoints: list[str] = None,
+        skeleton: list[list[int]] = None,
+    ) -> "Category":
+        """Category Format
+
+        Args:
+            cat_id (int): category id. natural number.
+            supercategory (str): supercategory name.
+            name (str): category name.
+            keypoints (list[str]): category name.
+            skeleton (list[list[int]]): skeleton edges.
+
+        Returns:
+            Category: category class
+        """
+        return cls(cat_id, supercategory, name, keypoints, skeleton)
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "Category":
+        """Category Format from dictionary
+
+        Args:
+            d (dict): Category dictionary
+
+        Returns:
+            Category: category class
+        """
+        cat_id = d.get("id", None)
+        supercategory = d.get("supercategory", None)
+        name = d.get("name", None)
+        keypoints = d.get("keypoints", None)
+        skeleton = d.get("skeleton", None)
+
+        if cat_id is None:
+            raise ValueError("id field missing")
+        if supercategory is None:
+            raise ValueError("file_name field missing")
+        if name is None:
+            raise ValueError("width field missing")
+
+        return cls(cat_id, supercategory, name, keypoints, skeleton)
+
+    @classmethod
     def classification(
         cls, cat_id: int, supercategory: str, name: str
     ) -> "Category":

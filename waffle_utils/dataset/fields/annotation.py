@@ -152,6 +152,97 @@ class Annotation(BaseField):
 
     # factories
     @classmethod
+    def new(
+        cls,
+        ann_id: int,
+        img_id: int,
+        cat_id: int = None,
+        bbox: list[int] = None,
+        mask: list[int] = None,
+        area: int = None,
+        keypoints: list[int] = None,
+        num_keypoints: int = None,
+        caption: str = None,
+        value: float = None,
+        iscrowd: bool = None,
+    ) -> "Annotation":
+        """Annotation Format
+
+        Args:
+            ann_id (int): annotaion id. natural number.
+            img_id (int): image id. natural number.
+            cat_id (int): category id. natural number.
+            bbox (list[int]): [x1, y1, w, h].
+            mask (list[int]): [x1, y1, x2, y2, x3, y3, ...].
+            area (int): bbox area.
+            keypoints (list[int]):
+                [x1, y1, v1(visible flag), x2, y2, v2(visible flag), ...].
+                visible flag is one of [0(Not labeled), 1(Labeled but not visible), 2(labeled and visible)]
+            num_keypoints: number of labeled keypoints
+            caption (str): string.
+            value (float): regression value.
+            iscrowd (bool, optional): is crowd or not. Default to False.
+
+        Returns:
+            Annotation: annotation class
+        """
+        return cls(
+            ann_id,
+            img_id,
+            cat_id,
+            bbox,
+            mask,
+            area,
+            keypoints,
+            num_keypoints,
+            caption,
+            value,
+            iscrowd,
+        )
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "Annotation":
+        """Annotation Format from dictionary
+
+        Args:
+            d (dict): Annotation dictionary
+
+        Returns:
+            Annotation: Annotation class
+        """
+
+        ann_id = d.get("id", None)
+        img_id = d.get("image_id", None)
+        cat_id = d.get("category_id", None)
+        bbox = d.get("bbox", None)
+        mask = d.get("mask", None)
+        area = d.get("area", None)
+        keypoints = d.get("keypoints", None)
+        num_keypoints = d.get("num_keypoints", None)
+        caption = d.get("caption", None)
+        value = d.get("value", None)
+        iscrowd = bool(d.get("iscrowd", None))
+
+        if ann_id is None:
+            raise ValueError("id field missing")
+        if img_id is None:
+            raise ValueError("image_id field missing")
+
+        return cls(
+            ann_id,
+            img_id,
+            cat_id,
+            bbox,
+            mask,
+            area,
+            keypoints,
+            num_keypoints,
+            caption,
+            value,
+            iscrowd,
+        )
+
+    @classmethod
     def classification(
         cls, ann_id: int, img_id: int, cat_id: int
     ) -> "Annotation":
@@ -318,10 +409,10 @@ class Annotation(BaseField):
             dict: annotation dictionary.
         """
 
-        ann = {"id": self.ann_id, "img_id": self.img_id}
+        ann = {"id": self.ann_id, "image_id": self.img_id}
 
         if self.cat_id is not None:
-            ann["cat_id"] = self.cat_id
+            ann["category_id"] = self.cat_id
         if self.bbox is not None:
             ann["bbox"] = self.bbox
         if self.mask is not None:

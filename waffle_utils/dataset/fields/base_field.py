@@ -8,3 +8,13 @@ class BaseField(ABC):
     @abstractmethod
     def to_dict(self):
         pass
+
+    @classmethod
+    @abstractmethod
+    def new(cls):
+        pass
+
+    @classmethod
+    @abstractmethod
+    def from_dict(cls):
+        pass

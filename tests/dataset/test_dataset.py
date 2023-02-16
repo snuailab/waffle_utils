@@ -1,8 +1,8 @@
-from waffle_utils.dataset import Dataset
+# from waffle_utils.dataset import Dataset
 
-# dataset = Dataset.new("mnist")
-# print(dataset)
+# # dataset = Dataset.new("mnist")
+# # print(dataset)
 
-# dataset = Dataset.from_directory("mnist")
+# # dataset = Dataset.from_directory("mnist")
 
-Dataset.clone("mnist", "new_mnist")
+# Dataset.clone("mnist", "new_mnist")
