@@ -171,10 +171,10 @@ class Dataset:
         raise NotImplementedError
 
     def initialize(self):
-        io.create_directory(self.raw_image_dir)
-        io.create_directory(self.image_dir)
-        io.create_directory(self.annotation_dir)
-        io.create_directory(self.category_dir)
+        io.make_directory(self.raw_image_dir)
+        io.make_directory(self.image_dir)
+        io.make_directory(self.annotation_dir)
+        io.make_directory(self.category_dir)
 
     def initialized(self):
         return (
