@@ -137,6 +137,15 @@ def copy_files_to_directory(
             shutil.copy(src_file, dst_file)
 
 
+def create_directory(src: str):
+    """Create Directory
+
+    Args:
+        src (str): directory
+    """
+    Path(src).mkdir(mode=0o766, parents=True, exist_ok=True)
+
+
 def remove_file(src: str):
     """Remove File
 
