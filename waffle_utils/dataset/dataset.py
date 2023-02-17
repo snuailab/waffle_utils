@@ -1,3 +1,5 @@
+import os
+import random
 from functools import cached_property
 from pathlib import Path
 
@@ -16,6 +18,10 @@ class Dataset:
     CATEGORY_DIR = Path("categories")
     EXPORT_DIR = Path("exports")
     SET_DIR = Path("sets")
+
+    TRAIN_SET_NAME = Path("train.json")
+    VAL_SET_NAME = Path("val.json")
+    UNLABELED_SET_NAME = Path("unlabeled.json")
 
     def __init__(
         self,
@@ -185,21 +191,48 @@ class Dataset:
         )
 
     # get
-    def get_imgs(self) -> list[Image]:
+    def get_imgs(self, img_ids: list[int] = None) -> list[Image]:
         return [
-            Image.from_json(f) for f in Path(self.image_dir).glob("*.json")
+            Image.from_json(f)
+            for f in (
+                [self.image_dir / f"{img_id}.json" for img_id in img_ids]
+                if img_ids
+                else self.image_dir.glob("*.json")
+            )
         ]
 
-    def get_cats(self) -> list[Category]:
+    def get_cats(self, cat_ids: list[int] = None) -> list[Category]:
         return [
             Category.from_json(f)
-            for f in Path(self.category_dir).glob("*.json")
+            for f in (
+                [self.category_dir / f"{cat_id}.json" for cat_id in cat_ids]
+                if cat_ids
+                else self.category_dir.glob("*.json")
+            )
         ]
 
-    def get_anns(self) -> list[Annotation]:
+    def get_anns(self, img_id: int = None) -> list[Annotation]:
+        if img_id:
+            return [
+                Annotation.from_json(f)
+                for f in self.annotation_dir.glob(f"{img_id}/*.json")
+            ]
+        else:
+            return [
+                Annotation.from_json(f)
+                for f in self.annotation_dir.glob("*/*.json")
+            ]
+
+    def get_labeled_imgs(self) -> list[Image]:
+        labeled_img_ids = map(
+            lambda x: x.name,
+            filter(
+                lambda x: os.path.isdir(x), Path(self.annotation_dir).glob("*")
+            ),
+        )
         return [
-            Annotation.from_json(f)
-            for f in Path(self.annotation_dir).glob("*.json")
+            Image.from_json(self.image_dir / f"{img_id}.json")
+            for img_id in labeled_img_ids
         ]
 
     # add
@@ -217,9 +250,36 @@ class Dataset:
 
     def add_anns(self, annotations: list[Annotation]):
         for item in annotations:
-            item_id = item.ann_id
-            item_path = self.annotation_dir / f"{item_id}.json"
-            io.save_json(item.to_dict(), item_path)
+            item_path = (
+                self.annotation_dir / f"{item.img_id}" / f"{item.ann_id}.json"
+            )
+            io.save_json(item.to_dict(), item_path, create_directory=True)
+
+    # functions
+    def split_train_val(self, train_split_ratio: float, seed: int = 0):
+        imgs: list[Image] = self.get_labeled_imgs()
+
+        num_imgs = len(imgs)
+        idxs = list(range(num_imgs))
+
+        random.seed(seed)
+        random.shuffle(idxs)
+
+        train_num = round(num_imgs * train_split_ratio)
+
+        train_img_idxs = idxs[:train_num]
+        val_img_idxs = idxs[train_num:]
+
+        io.save_json(
+            train_img_idxs,
+            self.set_dir / self.TRAIN_SET_NAME,
+            create_directory=True,
+        )
+        io.save_json(
+            val_img_idxs,
+            self.set_dir / self.VAL_SET_NAME,
+            create_directory=True,
+        )
 
     # export
     def export(self, export_format: Format) -> str:
