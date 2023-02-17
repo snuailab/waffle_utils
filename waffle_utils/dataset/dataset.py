@@ -84,6 +84,18 @@ class Dataset:
     # factories
     @classmethod
     def new(cls, name: str, root_dir: str = None) -> "Dataset":
+        """Create New Dataset
+
+        Args:
+            name (str): Dataset name
+            root_dir (str, optional): Dataset root directory. Defaults to None.
+
+        Raises:
+            FileExistsError: if dataset name already exists
+
+        Returns:
+            Dataset: Dataset Class
+        """
         ds = cls(name, root_dir)
         if ds.initialized():
             raise FileExistsError(
@@ -100,10 +112,27 @@ class Dataset:
         src_root_dir: str = None,
         root_dir: str = None,
     ) -> "Dataset":
+        """Clone Existing Dataset
+
+        Args:
+            src_name (str):
+                Dataset name to clone.
+                It should be Waffle Created Dataset.
+            name (str): New Dataset name
+            src_root_dir (str, optional): Source Dataset root directory. Defaults to None.
+            root_dir (str, optional): New Dataset root directory. Defaults to None.
+
+        Raises:
+            FileNotFoundError: if source dataset does not exist.
+            FileExistsError: if new dataset name already exist.
+
+        Returns:
+            Dataset: Dataset Class
+        """
         src_ds = cls(src_name, src_root_dir)
         if not src_ds.initialized():
             raise FileNotFoundError(
-                f"{src_ds.dataset_dir} has not been created."
+                f"{src_ds.dataset_dir} has not been created by Waffle."
             )
 
         ds = cls(name, root_dir)
@@ -118,6 +147,18 @@ class Dataset:
 
     @classmethod
     def from_directory(cls, name: str, root_dir: str = None) -> "Dataset":
+        """Load Dataset from directory.
+
+        Args:
+            name (str): Dataset name that Waffle Created
+            root_dir (str, optional): Dataset root directory. Defaults to None.
+
+        Raises:
+            FileNotFoundError: if source dataset does not exist.
+
+        Returns:
+            Dataset: Dataset Class
+        """
         ds = cls(name, root_dir)
         if not ds.initialized():
             raise FileNotFoundError(
@@ -133,6 +174,20 @@ class Dataset:
         coco_root_dir: str,
         root_dir: str = None,
     ) -> "Dataset":
+        """Import Dataset from coco format.
+
+        Args:
+            name (str): Dataset name.
+            coco_file (str): Coco json file path.
+            coco_root_dir (str): Coco image root directory.
+            root_dir (str, optional): Dataset root directory. Defaults to None.
+
+        Raises:
+            FileExistsError: if new dataset name already exist.
+
+        Returns:
+            Dataset: Dataset Class
+        """
         ds = cls(name, root_dir)
         if ds.initialized():
             raise FileExistsError(
@@ -177,12 +232,22 @@ class Dataset:
         raise NotImplementedError
 
     def initialize(self):
+        """Initialize Dataset.
+        It creates necessary directories under {dataset_root_dir}/{dataset_name}.
+        """
         io.make_directory(self.raw_image_dir)
         io.make_directory(self.image_dir)
         io.make_directory(self.annotation_dir)
         io.make_directory(self.category_dir)
 
-    def initialized(self):
+    def initialized(self) -> bool:
+        """Check if Dataset has been initialized or not.
+
+        Returns:
+            bool:
+                initialized -> True
+                not initialized -> False
+        """
         return (
             self.raw_image_dir.exists()
             and self.image_dir.exists()
@@ -192,6 +257,14 @@ class Dataset:
 
     # get
     def get_imgs(self, img_ids: list[int] = None) -> list[Image]:
+        """Get "Image"s.
+
+        Args:
+            img_ids (list[int], optional): id list. None for all "Image"s. Defaults to None.
+
+        Returns:
+            list[Image]: "Image" list
+        """
         return [
             Image.from_json(f)
             for f in (
@@ -202,6 +275,14 @@ class Dataset:
         ]
 
     def get_cats(self, cat_ids: list[int] = None) -> list[Category]:
+        """Get "Category"s.
+
+        Args:
+            cat_ids (list[int], optional): id list. None for all "Category"s. Defaults to None.
+
+        Returns:
+            list[Category]: "Category" list
+        """
         return [
             Category.from_json(f)
             for f in (
@@ -212,6 +293,14 @@ class Dataset:
         ]
 
     def get_anns(self, img_id: int = None) -> list[Annotation]:
+        """Get "Annotation"s.
+
+        Args:
+            img_id (int, optional): image id. None for all "Annotation"s. Defaults to None.
+
+        Returns:
+            list[Annotation]: "Annotation" list
+        """
         if img_id:
             return [
                 Annotation.from_json(f)
@@ -224,6 +313,11 @@ class Dataset:
             ]
 
     def get_labeled_imgs(self) -> list[Image]:
+        """Get labeled "Image"s
+
+        Returns:
+            list[Image]: "Image" list
+        """
         labeled_img_ids = map(
             lambda x: x.name,
             filter(
@@ -237,18 +331,33 @@ class Dataset:
 
     # add
     def add_imgs(self, images: list[Image]):
+        """Add "Image"s to dataset.
+
+        Args:
+            images (list[Image]): list of "Image"s
+        """
         for item in images:
             item_id = item.img_id
             item_path = self.image_dir / f"{item_id}.json"
             io.save_json(item.to_dict(), item_path)
 
     def add_cats(self, categories: list[Category]):
+        """Add "Category"s to dataset.
+
+        Args:
+            categories (list[Category]): list of "Category"s
+        """
         for item in categories:
             item_id = item.cat_id
             item_path = self.category_dir / f"{item_id}.json"
             io.save_json(item.to_dict(), item_path)
 
     def add_anns(self, annotations: list[Annotation]):
+        """Add "Annotation"s to dataset.
+
+        Args:
+            annotations (list[Annotation]): list of "Annotation"s
+        """
         for item in annotations:
             item_path = (
                 self.annotation_dir / f"{item.img_id}" / f"{item.ann_id}.json"
@@ -257,6 +366,12 @@ class Dataset:
 
     # functions
     def split_train_val(self, train_split_ratio: float, seed: int = 0):
+        """Split Dataset to train and validation sets. (TODO: unlabeled set)
+
+        Args:
+            train_split_ratio (float): train num ratio
+            seed (int, optional): random seed. Defaults to 0.
+        """
         imgs: list[Image] = self.get_labeled_imgs()
 
         num_imgs = len(imgs)
