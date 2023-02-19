@@ -1,5 +1,6 @@
 import os
 import random
+import warnings
 from functools import cached_property
 from pathlib import Path
 
@@ -425,15 +426,12 @@ class Dataset:
                     ...
             """
 
-            def _export(img_ids: list[int], export_dir: str):
-                export_dir = Path(export_dir)
+            def _export(images: list[Image], export_dir: Path):
                 img_dir = export_dir / "images"
                 label_dir = export_dir / "labels"
 
                 io.make_directory(img_dir)
                 io.make_directory(label_dir)
-
-                images: list[Image] = self.get_imgs(img_ids)
 
                 for image in images:
                     image_path = self.raw_image_dir / f"{image.file_name}"
@@ -478,8 +476,8 @@ class Dataset:
             export_dir = self.export_dir / export_format.name
             io.make_directory(export_dir)
 
-            _export(train_img_ids, export_dir / "train")
-            _export(val_img_ids, export_dir / "val")
+            _export(self.get_imgs(train_img_ids), export_dir / "train")
+            _export(self.get_imgs(val_img_ids), export_dir / "val")
             io.save_yaml(
                 {
                     "path": str(export_dir.absolute()),
@@ -494,7 +492,92 @@ class Dataset:
             )
 
         elif export_format == Format.YOLO_CLASSIFICATION:
-            raise NotImplementedError
+            f"""YOLO CLASSIFICATION FORMAT (compatiable with torchvision.datasets.ImageFolder)
+            - directory format
+                yolo_dataset/
+                    train/
+                        person/
+                            1.png
+                        bicycle/
+                            2.png
+                    val/
+                        person/
+                            3.png
+                        bicycle/
+                            4.png
+            - dataset.yaml
+                path: [dataset_dir]/exports/{export_format.name}
+                train: train
+                val: val
+                names:
+                    0: person
+                    1: bicycle
+                    ...
+            """
+
+            def _export(
+                images: list[Image],
+                categories: list[Category],
+                export_dir: Path,
+            ):
+                img_dir = export_dir
+                cat_dict: dict = {cat.cat_id: cat.name for cat in categories}
+
+                for image in images:
+                    image_path = self.raw_image_dir / f"{image.file_name}"
+
+                    annotations: list[Annotation] = self.get_anns(image.img_id)
+                    # TODO: multi label supports.
+                    # TODO: check if YOLO will support multi label.
+                    if len(annotations) > 1:
+                        warnings.warn(
+                            f"Multi label does not support yet. Skipping {image_path}."
+                        )
+                        continue
+                    cat_id = annotations[0].cat_id
+
+                    image_dst_path = (
+                        img_dir / cat_dict[cat_id] / f"{image.file_name}"
+                    )
+                    io.copy_file(
+                        image_path, image_dst_path, create_directory=True
+                    )
+
+            train_set_file = (
+                self.dataset_dir / self.SET_DIR / self.TRAIN_SET_NAME
+            )
+            val_set_file = self.dataset_dir / self.SET_DIR / self.VAL_SET_NAME
+
+            if not train_set_file.exists() or not val_set_file.exists():
+                # TODO: unlabeled export
+                raise FileNotFoundError(
+                    "There is no set files. Please run ds.split_train_val() first"
+                )
+
+            train_img_ids: list = io.load_json(train_set_file)
+            val_img_ids: list = io.load_json(val_set_file)
+
+            export_dir = self.export_dir / export_format.name
+            io.make_directory(export_dir)
+
+            categories: list[Category] = self.get_cats()
+            _export(
+                self.get_imgs(train_img_ids), categories, export_dir / "train"
+            )
+            _export(self.get_imgs(val_img_ids), categories, export_dir / "val")
+            io.save_yaml(
+                {
+                    "path": str(export_dir.absolute()),
+                    "train": "train",
+                    "val": "val",
+                    "names": {
+                        category.cat_id - 1: category.name
+                        for category in categories
+                    },
+                },
+                export_dir / "data.yaml",
+            )
+
         elif export_format == Format.YOLO_SEGMENTATION:
             raise NotImplementedError
         elif export_format == Format.COCO_DETECTION:
