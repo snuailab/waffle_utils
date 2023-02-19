@@ -386,12 +386,12 @@ class Dataset:
         val_img_idxs = idxs[train_num:]
 
         io.save_json(
-            train_img_idxs,
+            [imgs[idx].img_id for idx in train_img_idxs],
             self.set_dir / self.TRAIN_SET_NAME,
             create_directory=True,
         )
         io.save_json(
-            val_img_idxs,
+            [imgs[idx].img_id for idx in val_img_idxs],
             self.set_dir / self.VAL_SET_NAME,
             create_directory=True,
         )
@@ -399,7 +399,100 @@ class Dataset:
     # export
     def export(self, export_format: Format) -> str:
         if export_format == Format.YOLO_DETECTION:
-            raise NotImplementedError
+            """YOLO DETECTION FORMAT
+            - directory format
+                yolo_dataset/
+                    train/
+                        images/
+                            1.png
+                        labels/
+                            1.txt
+                                ```
+                                class x_center y_center width height
+                                ```
+                    val/
+                        images/
+                            2.png
+                        labels/
+                            2.txt
+            - dataset.yaml
+                path: {dataset_dir}/exports/yolo_detection
+                train: train
+                val: val
+                names:
+                    0: person
+                    1: bicycle
+                    ...
+            """
+
+            def _export(img_ids: list[int], export_dir: str):
+                export_dir = Path(export_dir)
+                img_dir = export_dir / "images"
+                label_dir = export_dir / "labels"
+
+                io.make_directory(img_dir)
+                io.make_directory(label_dir)
+
+                images: list[Image] = self.get_imgs(img_ids)
+
+                for image in images:
+                    image_path = self.raw_image_dir / f"{image.file_name}"
+                    image_dst_path = img_dir / f"{image.file_name}"
+                    label_dst_path = (
+                        label_dir / f"{image.file_name}"
+                    ).with_suffix(".txt")
+                    io.copy_file(image_path, image_dst_path)
+
+                    W = image.width
+                    H = image.height
+
+                    annotations: list[Annotation] = self.get_anns(image.img_id)
+                    label_txts = []
+                    for annotation in annotations:
+                        x1, y1, w, h = annotation.bbox
+                        x1, w = x1 / W, w / W
+                        y1, h = y1 / H, h / H
+                        cx, cy = x1 + w / 2, y1 + h / 2
+
+                        category_id = annotation.cat_id - 1
+
+                        label_txts.append(f"{category_id} {cx} {cy} {w} {h}")
+
+                    with open(label_dst_path, "w") as f:
+                        f.write("\n".join(label_txts))
+
+            train_set_file = (
+                self.dataset_dir / self.SET_DIR / self.TRAIN_SET_NAME
+            )
+            val_set_file = self.dataset_dir / self.SET_DIR / self.VAL_SET_NAME
+
+            if not train_set_file.exists() or not val_set_file.exists():
+                # TODO: unlabeled export
+                raise FileNotFoundError(
+                    "There is no set files. Please run split_train_val first"
+                )
+
+            train_img_ids: list = io.load_json(train_set_file)
+            val_img_ids: list = io.load_json(val_set_file)
+
+            export_dir = self.export_dir / "yolo_detection"
+            io.make_directory(export_dir)
+
+            _export(train_img_ids, export_dir / "train")
+            _export(val_img_ids, export_dir / "val")
+            io.save_yaml(
+                {
+                    "path": str(export_dir.absolute()),
+                    "train": "train",
+                    "val": "val",
+                    "names": {
+                        category.cat_id - 1: category.name
+                        for category in self.get_cats()
+                    },
+                },
+                export_dir / "data.yaml",
+            )
+
         elif export_format == Format.YOLO_CLASSIFICATION:
             raise NotImplementedError
         elif export_format == Format.YOLO_SEGMENTATION:

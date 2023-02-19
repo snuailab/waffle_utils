@@ -2,6 +2,7 @@ from waffle_utils.dataset import Dataset
 from waffle_utils.dataset.fields import Annotation as A
 from waffle_utils.dataset.fields import Category as C
 from waffle_utils.dataset.fields import Image as I
+from waffle_utils.dataset.format import Format
 from waffle_utils.file import io, network
 
 
@@ -107,6 +108,6 @@ def test_import_coco():
     ds.split_train_val(train_split_ratio=0.8)
 
     # todo export
-    # ds.export
+    ds.export(Format.YOLO_DETECTION)
 
-    io.remove_directory(dummy_tmp_dir)
+    # io.remove_directory(dummy_tmp_dir)
