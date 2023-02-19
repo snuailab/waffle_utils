@@ -399,7 +399,7 @@ class Dataset:
     # export
     def export(self, export_format: Format) -> str:
         if export_format == Format.YOLO_DETECTION:
-            """YOLO DETECTION FORMAT
+            f"""YOLO DETECTION FORMAT
             - directory format
                 yolo_dataset/
                     train/
@@ -407,16 +407,16 @@ class Dataset:
                             1.png
                         labels/
                             1.txt
-                                ```
-                                class x_center y_center width height
-                                ```
+                            ```
+                            class x_center y_center width height
+                            ```
                     val/
                         images/
                             2.png
                         labels/
                             2.txt
             - dataset.yaml
-                path: {dataset_dir}/exports/yolo_detection
+                path: [dataset_dir]/exports/{export_format.name}
                 train: train
                 val: val
                 names:
@@ -469,13 +469,13 @@ class Dataset:
             if not train_set_file.exists() or not val_set_file.exists():
                 # TODO: unlabeled export
                 raise FileNotFoundError(
-                    "There is no set files. Please run split_train_val first"
+                    "There is no set files. Please run ds.split_train_val() first"
                 )
 
             train_img_ids: list = io.load_json(train_set_file)
             val_img_ids: list = io.load_json(val_set_file)
 
-            export_dir = self.export_dir / "yolo_detection"
+            export_dir = self.export_dir / export_format.name
             io.make_directory(export_dir)
 
             _export(train_img_ids, export_dir / "train")
