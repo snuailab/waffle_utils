@@ -12,10 +12,10 @@ class Annotation(BaseField):
         img_id: int,
         # optional
         cat_id: int = None,
-        bbox: list[int] = None,
+        bbox: list[float] = None,
         mask: list[int] = None,
-        area: int = None,
-        keypoints: list[int] = None,
+        area: float = None,
+        keypoints: list[float] = None,
         num_keypoints: int = None,
         caption: str = None,
         value: float = None,
@@ -98,7 +98,7 @@ class Annotation(BaseField):
         return self._area
 
     @area.setter
-    @type_validator(int)
+    @type_validator(float, strict=False)
     def area(self, v):
         self._area = v
 
