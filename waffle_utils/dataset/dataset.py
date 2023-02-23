@@ -439,7 +439,9 @@ class Dataset:
                     label_dst_path = (
                         label_dir / f"{image.file_name}"
                     ).with_suffix(".txt")
-                    io.copy_file(image_path, image_dst_path)
+                    io.copy_file(
+                        image_path, image_dst_path, create_directory=True
+                    )
 
                     W = image.width
                     H = image.height
@@ -456,6 +458,7 @@ class Dataset:
 
                         label_txts.append(f"{category_id} {cx} {cy} {w} {h}")
 
+                    io.make_directory(label_dst_path.parent)
                     with open(label_dst_path, "w") as f:
                         f.write("\n".join(label_txts))
 
