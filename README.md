@@ -4,6 +4,10 @@
 - waffle util tools
 - [Waffle Data Convention](https://snuailab.notion.site/Waffle-Data-Convention-7547fda8c1ca48798d00bd4658ea96bf)
 
+# Install
+- python >= 3.9
+- `pip install waffle_utils`
+
 # Examples
 ## Create Dataset from coco format
 both example below will result same output
@@ -37,9 +41,9 @@ ds.export(Format.YOLO_DETECTION)
 ```
 ### CLI
 ```
-python main.py get_file_from_url --url https://github.com/snuailab/waffle_utils/raw/main/mnist.zip --file-path tmp/mnist.zip
-python main.py unzip --url tmp/mnist.zip --output-dir tmp/extract
-python main.py from_coco --name mnist --coco-file tmp/extract/exports/coco.json --coco-root-dir tmp/extract/raw
-python main.py split_train_val --name mnist --train-split-ratio 0.8
-python main.py export --name mnist --export-format yolo_detection
+wu get_file_from_url --url https://github.com/snuailab/waffle_utils/raw/main/mnist.zip --file-path tmp/mnist.zip
+wu unzip --url tmp/mnist.zip --output-dir tmp/extract
+wu from_coco --name mnist --coco-file tmp/extract/exports/coco.json --coco-root-dir tmp/extract/raw
+wu split_train_val --name mnist --train-split-ratio 0.8
+wu export --name mnist --export-format yolo_detection
 ```
