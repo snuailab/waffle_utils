@@ -49,7 +49,7 @@ setup(
     #     'export': ['coremltools>=6.0', 'onnx', 'onnxsim', 'onnxruntime', 'openvino-dev>=2022.3'],
     #     'tf': ['onnx2tf', 'sng4onnx', 'tflite_support', 'tensorflow']},
     classifiers=[
-        "Development Status :: Alpha",
+        "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
         # 'Intended Audience :: Education',
         "Intended Audience :: Science/Research",
