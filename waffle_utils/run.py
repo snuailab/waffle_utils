@@ -96,11 +96,13 @@ def _export(
 
 @app.command(name="video_to_frames")
 def _video_to_frames(
-    name: str = typer.Option(..., help=name_docs),
-    root_dir: str = typer.Option(None),
+    # TODO: Add `help`s
+    input_video_path: str = typer.Option(...),
+    output_dir: str = typer.Option(...),
+    frame_rate: int = typer.Option(...),
 ):
-    vt = VideoTools
-    vt.video_to_frames(name, root_dir)
+    video_converter = VideoTools.video_to_frames(input_video_path, output_dir)
+    video_converter.extract_frames(frame_rate)
 
 
 if __name__ == "__main__":
