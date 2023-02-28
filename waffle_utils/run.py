@@ -5,6 +5,7 @@ from waffle_utils.dataset import Dataset
 from waffle_utils.dataset.format import Format
 from waffle_utils.file.io import unzip
 from waffle_utils.file.network import get_file_from_url
+from waffle_utils.video_processing.video_tools import VideoTools
 
 app = typer.Typer()
 
@@ -91,6 +92,15 @@ def _export(
         )
 
     ds.export(Format[export_format])
+
+
+@app.command(name="video_to_frames")
+def _video_to_frames(
+    name: str = typer.Option(..., help=name_docs),
+    root_dir: str = typer.Option(None),
+):
+    vt = VideoTools
+    vt.video_to_frames(name, root_dir)
 
 
 if __name__ == "__main__":
