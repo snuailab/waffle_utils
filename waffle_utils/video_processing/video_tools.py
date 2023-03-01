@@ -3,27 +3,28 @@ from pathlib import Path
 
 
 class VideoTools:
-    def __init__(self, input_video_path: str, output_dir: str = None):
-        self.input_video_path = self._input_video_path = input_video_path
-        self.root_dir = self._root_dir = Path(output_dir)  # TODO: if root_dir else
+    def __init__(self, input_path: str, output_path: str):
+        self.input_path = self._input_path = input_path
+        self.output_path = self._output_path = output_path
 
+    # properties
     @property
-    def input_video_path(self):
-        return self._input_video_path
+    def input_path(self):
+        return self._input_path
 
-    @input_video_path.setter
+    @input_path.setter
     @type_validator(str)
-    def input_video_path(self, v):
-        self._input_video_path = v
+    def input_path(self, v):
+        self._input_path = v
 
     @property
-    def root_dir(self):
-        return self._root_dir
+    def output_path(self):
+        return self._output_path
 
-    @root_dir.setter
-    @type_validator(Path)
-    def root_dir(self, v):
-        self._root_dir = v
+    @output_path.setter
+    @type_validator(str)
+    def output_path(self, v):
+        self._output_path = v
 
     # factories
     @classmethod
