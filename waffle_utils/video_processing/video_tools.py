@@ -137,7 +137,13 @@ class VideoTools:
             os.makedirs(str(Path(self.output_path).parent))
 
         # Get the list of frames
-        frames = sorted(Path(self.input_path).parent.glob("*.jpg"))
+        if "*" in self.input_path:  # if input path has wildcard (*)
+            frames = sorted(Path(self.input_path).parent.glob("*.jpg"))
+        else:  # if input path does not have wildcard (*)
+            if Path(self.input_path).is_file():
+                frames = [Path(self.input_path)]
+            else:
+                frames = sorted(Path(self.input_path).glob("*.jpg"))
 
         # Load the first frame to get dimensions
         first_frame = cv2.imread(str(frames[0]))
