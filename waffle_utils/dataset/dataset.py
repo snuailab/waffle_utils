@@ -481,6 +481,8 @@ class Dataset:
 
             _export(self.get_imgs(train_img_ids), export_dir / "train")
             _export(self.get_imgs(val_img_ids), export_dir / "val")
+
+            data_file = export_dir / "data.yaml"
             io.save_yaml(
                 {
                     "path": str(export_dir.absolute()),
@@ -491,8 +493,10 @@ class Dataset:
                         for category in self.get_cats()
                     },
                 },
-                export_dir / "data.yaml",
+                data_file,
             )
+
+            return str(data_file)
 
         elif export_format == Format.YOLO_CLASSIFICATION:
             f"""YOLO CLASSIFICATION FORMAT (compatiable with torchvision.datasets.ImageFolder)
@@ -568,6 +572,8 @@ class Dataset:
                 self.get_imgs(train_img_ids), categories, export_dir / "train"
             )
             _export(self.get_imgs(val_img_ids), categories, export_dir / "val")
+
+            data_file = export_dir / "data.yaml"
             io.save_yaml(
                 {
                     "path": str(export_dir.absolute()),
@@ -578,8 +584,10 @@ class Dataset:
                         for category in categories
                     },
                 },
-                export_dir / "data.yaml",
+                data_file,
             )
+
+            return str(data_file)
 
         elif export_format == Format.YOLO_SEGMENTATION:
             raise NotImplementedError
