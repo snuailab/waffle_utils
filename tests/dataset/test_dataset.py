@@ -56,6 +56,12 @@ def test_images():
         file_name="a.png",
         width=100,
         height=100,
+    )
+    img = I.new(
+        img_id=1,
+        file_name="a.png",
+        width=100,
+        height=100,
         date_captured="2020-09-26 18:00:00",
     )
     I.from_dict(img.to_dict())

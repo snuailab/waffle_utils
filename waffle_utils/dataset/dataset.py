@@ -30,29 +30,29 @@ class Dataset:
         name: str,
         root_dir: str = None,
     ):
-        self.name = self._name = name
-        self.root_dir = self._root_dir = (
+        self.name = name
+        self.root_dir = (
             Path(root_dir) if root_dir else Dataset.DEFAULT_DATASET_ROOT_DIR
         )
 
     # properties
     @property
     def name(self):
-        return self._name
+        return self.__name
 
     @name.setter
     @type_validator(str)
     def name(self, v):
-        self._name = v
+        self.__name = v
 
     @property
     def root_dir(self):
-        return self._root_dir
+        return self.__root_dir
 
     @root_dir.setter
     @type_validator(Path)
     def root_dir(self, v):
-        self._root_dir = v
+        self.__root_dir = v
 
     # cached properties
     @cached_property
