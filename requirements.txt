@@ -3,4 +3,3 @@ wget==3.2
 PyYAML==6.0
 typer[all]
 rich
-opencv-python

@@ -162,7 +162,7 @@ def copy_file(
     shutil.copy(src, dst)
 
 
-def make_directory(src: Union[str, Path]):
+def make_directory(src: str):
     """Create Directory
 
     Args:
@@ -180,7 +180,7 @@ def remove_file(src: str):
     os.remove(src)
 
 
-def remove_directory(src: Union[str, Path]):
+def remove_directory(src: str):
     """Remove Directory
 
     Args:
