@@ -16,59 +16,59 @@ class Category(BaseField):
         skeleton: list[list[int]] = None,
     ):
 
-        self.cat_id = self._cat_id = cat_id
-        self.supercategory = self._supercategory = supercategory
-        self.name = self._name = name
-        self.keypoints = self._keypoints = keypoints
-        self.skeleton = self._skeleton = skeleton
+        self.cat_id = cat_id
+        self.supercategory = supercategory
+        self.name = name
+        self.keypoints = keypoints
+        self.skeleton = skeleton
 
     # properties
     @property
     def cat_id(self):
-        return self._cat_id
+        return self.__cat_id
 
     @cat_id.setter
     @type_validator(int)
     def cat_id(self, v):
         if v and v < 1:
             raise ValueError("id should be greater than 0.")
-        self._cat_id = v
+        self.__cat_id = v
 
     @property
     def supercategory(self):
-        return self._supercategory
+        return self.__supercategory
 
     @supercategory.setter
     @type_validator(str)
     def supercategory(self, v):
-        self._supercategory = v
+        self.__supercategory = v
 
     @property
     def name(self):
-        return self._name
+        return self.__name
 
     @name.setter
     @type_validator(str)
     def name(self, v):
-        self._name = v
+        self.__name = v
 
     @property
     def keypoints(self):
-        return self._keypoints
+        return self.__keypoints
 
     @keypoints.setter
     @type_validator(list)
     def keypoints(self, v):
-        self._keypoints = v
+        self.__keypoints = v
 
     @property
     def skeleton(self):
-        return self._skeleton
+        return self.__skeleton
 
     @skeleton.setter
     @type_validator(list)
     def skeleton(self, v):
-        self._skeleton = v
+        self.__skeleton = v
 
     # factories
     @classmethod

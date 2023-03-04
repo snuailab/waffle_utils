@@ -23,66 +23,66 @@ class Annotation(BaseField):
         iscrowd: bool = None,
     ):
 
-        self.ann_id = self._ann_id = ann_id
-        self.img_id = self._img_id = img_id
-        self.cat_id = self._cat_id = cat_id
-        self.bbox = self._bbox = bbox
-        self.mask = self._mask = mask
-        self.area = self._area = area
-        self.keypoints = self._keypoints = keypoints
-        self.num_keypoints = self._num_keypoints = num_keypoints
-        self.caption = self._caption = caption
-        self.value = self._value = value
-        self.iscrowd = self._iscrowd = iscrowd
+        self.ann_id = ann_id
+        self.img_id = img_id
+        self.cat_id = cat_id
+        self.bbox = bbox
+        self.mask = mask
+        self.area = area
+        self.keypoints = keypoints
+        self.num_keypoints = num_keypoints
+        self.caption = caption
+        self.value = value
+        self.iscrowd = iscrowd
 
     # properties
     @property
     def ann_id(self):
-        return self._ann_id
+        return self.__ann_id
 
     @ann_id.setter
     @type_validator(int)
     def ann_id(self, v):
         if v and v < 1:
             raise ValueError("id should be greater than 0.")
-        self._ann_id = v
+        self.__ann_id = v
 
     @property
     def img_id(self):
-        return self._img_id
+        return self.__img_id
 
     @img_id.setter
     @type_validator(int)
     def img_id(self, v):
         if v and v < 1:
             raise ValueError("id should be greater than 0.")
-        self._img_id = v
+        self.__img_id = v
 
     @property
     def cat_id(self):
-        return self._cat_id
+        return self.__cat_id
 
     @cat_id.setter
     @type_validator(int)
     def cat_id(self, v):
         if v and v < 1:
             raise ValueError("id should be greater than 0.")
-        self._cat_id = v
+        self.__cat_id = v
 
     @property
     def bbox(self):
-        return self._bbox
+        return self.__bbox
 
     @bbox.setter
     @type_validator(list)
     def bbox(self, v):
         if v and len(v) != 4:
             raise ValueError("the length of bbox should be 4.")
-        self._bbox = v
+        self.__bbox = v
 
     @property
     def mask(self):
-        return self._mask
+        return self.__mask
 
     @mask.setter
     @type_validator(list)
@@ -91,20 +91,20 @@ class Annotation(BaseField):
             raise ValueError(
                 "the length of mask should be at least 6 and divisible by 2."
             )
-        self._mask = v
+        self.__mask = v
 
     @property
     def area(self):
-        return self._area
+        return self.__area
 
     @area.setter
     @type_validator(float, strict=False)
     def area(self, v):
-        self._area = v
+        self.__area = v
 
     @property
     def keypoints(self):
-        return self._keypoints
+        return self.__keypoints
 
     @keypoints.setter
     @type_validator(list)
@@ -113,43 +113,43 @@ class Annotation(BaseField):
             raise ValueError(
                 "the length of keypoints should be at least 2 and divisible by 3."
             )
-        self._keypoints = v
+        self.__keypoints = v
 
     @property
     def num_keypoints(self):
-        return self._num_keypoints
+        return self.__num_keypoints
 
     @num_keypoints.setter
     @type_validator(int)
     def num_keypoints(self, v):
-        self._num_keypoints = v
+        self.__num_keypoints = v
 
     @property
     def caption(self):
-        return self._caption
+        return self.__caption
 
     @caption.setter
     @type_validator(str)
     def caption(self, v):
-        self._caption = v
+        self.__caption = v
 
     @property
     def value(self):
-        return self._value
+        return self.__value
 
     @value.setter
     @type_validator(float)
     def value(self, v):
-        self._value = v
+        self.__value = v
 
     @property
     def iscrowd(self):
-        return self._iscrowd
+        return self.__iscrowd
 
     @iscrowd.setter
     @type_validator(bool)
     def iscrowd(self, v):
-        self._iscrowd = v
+        self.__iscrowd = v
 
     # factories
     @classmethod
