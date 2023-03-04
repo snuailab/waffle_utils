@@ -5,6 +5,8 @@ from waffle_utils.dataset import Dataset
 from waffle_utils.dataset.format import Format
 from waffle_utils.file.io import unzip
 from waffle_utils.file.network import get_file_from_url
+from waffle_utils.video.defaults import DEFAULT_FRAME_RATE
+from waffle_utils.video.tools import create_video, extract_frames
 
 app = typer.Typer()
 
@@ -91,6 +93,39 @@ def _export(
         )
 
     ds.export(Format[export_format])
+
+
+# video processing docs
+input_video_path_docs = "path to input video file"
+input_frames_dir_docs = "directory to input frame image files"
+output_frames_dir_docs = "directory to output frame image files"
+output_video_path_docs = "path for output video file"
+frame_rate_docs = "frame rate"
+verbose_docs = "verbose"
+
+
+@app.command(name="extract_frames")
+def _extract_frames(
+    input_path: str = typer.Option(..., help=input_video_path_docs),
+    output_dir: str = typer.Option(..., help=output_frames_dir_docs),
+    frame_rate: int = typer.Option(DEFAULT_FRAME_RATE, help=frame_rate_docs),
+    verbose: bool = typer.Option(False, help=verbose_docs),
+):
+    """Extract Frames from a Video File"""
+
+    extract_frames(input_path, output_dir, frame_rate, verbose)
+
+
+@app.command(name="create_video")
+def _create_video(
+    input_dir: str = typer.Option(..., help=input_frames_dir_docs),
+    output_path: str = typer.Option(..., help=output_video_path_docs),
+    frame_rate: int = typer.Option(DEFAULT_FRAME_RATE, help=frame_rate_docs),
+    verbose: bool = typer.Option(False, help=verbose_docs),
+):
+    """Create a Video from Frame Image Files"""
+
+    create_video(input_dir, output_path, frame_rate, verbose)
 
 
 if __name__ == "__main__":
