@@ -1,3 +1,6 @@
+import tempfile
+from pathlib import Path
+
 from waffle_utils.dataset import Dataset
 from waffle_utils.dataset.fields import Annotation as A
 from waffle_utils.dataset.fields import Category as C
@@ -53,6 +56,12 @@ def test_images():
         file_name="a.png",
         width=100,
         height=100,
+    )
+    img = I.new(
+        img_id=1,
+        file_name="a.png",
+        width=100,
+        height=100,
         date_captured="2020-09-26 18:00:00",
     )
     I.from_dict(img.to_dict())
@@ -84,30 +93,37 @@ def test_categories():
 def test_import_coco():
     url = "https://github.com/snuailab/waffle_utils/raw/main/mnist.zip"
 
-    dummy_tmp_dir = "tmp"
-    dummy_zip_file = "tmp/mnist.zip"
-    dummy_data_root_dir = "tmp/dataset"
-    dummy_dataset_name = "mnist"
+    with tempfile.TemporaryDirectory() as dummy_tmp_dir:
+        dummy_tmp_dir = Path(dummy_tmp_dir)
+        dummy_zip_file = dummy_tmp_dir / "mnist.zip"
+        dummy_data_root_dir = dummy_tmp_dir / "tmp/dataset"
+        dummy_dataset_name = "mnist"
 
-    dummy_extract_dir = "tmp/extract"
-    dummy_coco_root_dir = "tmp/extract/raw"
-    dummy_coco_file = "tmp/extract/exports/coco.json"
+        dummy_extract_dir = dummy_tmp_dir / "tmp/extract"
+        dummy_coco_root_dir = dummy_tmp_dir / "tmp/extract/raw"
+        dummy_coco_file = dummy_tmp_dir / "tmp/extract/exports/coco.json"
 
-    network.get_file_from_url(url, dummy_zip_file, create_directory=True)
-    io.unzip(dummy_zip_file, dummy_extract_dir, create_directory=True)
+        network.get_file_from_url(url, dummy_zip_file, create_directory=True)
+        io.unzip(dummy_zip_file, dummy_extract_dir, create_directory=True)
 
-    ds = Dataset.from_coco(
-        dummy_dataset_name,
-        dummy_coco_file,
-        dummy_coco_root_dir,
-        root_dir=dummy_data_root_dir,
-    )
+        ds = Dataset.from_coco(
+            dummy_dataset_name,
+            dummy_coco_file,
+            dummy_coco_root_dir,
+            root_dir=dummy_data_root_dir,
+        )
 
-    ds = Dataset.from_directory(dummy_dataset_name, dummy_data_root_dir)
+        ds = Dataset.from_directory(dummy_dataset_name, dummy_data_root_dir)
 
-    ds.split_train_val(train_split_ratio=0.8)
+        ds.split_train_val(train_split_ratio=0.8)
 
-    # todo export
-    ds.export(Format.YOLO_DETECTION)
+        # todo export
+        exported_dataset_dir = ds.export(Format.YOLO_DETECTION)
+        exported_dataset_dir = ds.export("yolo_detection")
+        exported_dataset_dir = ds.export("YOLO_DETECTION")
+        assert Path(exported_dataset_dir).exists()
 
-    # io.remove_directory(dummy_tmp_dir)
+        exported_dataset_dir = ds.export(Format.YOLO_CLASSIFICATION)
+        exported_dataset_dir = ds.export("yolo_classification")
+        exported_dataset_dir = ds.export("YOLO_CLASSIFICATION")
+        assert Path(exported_dataset_dir).exists()

@@ -3,6 +3,7 @@ import random
 import warnings
 from functools import cached_property
 from pathlib import Path
+from typing import Union
 
 from waffle_utils.file import io
 from waffle_utils.utils import type_validator
@@ -29,29 +30,29 @@ class Dataset:
         name: str,
         root_dir: str = None,
     ):
-        self.name = self._name = name
-        self.root_dir = self._root_dir = (
+        self.name = name
+        self.root_dir = (
             Path(root_dir) if root_dir else Dataset.DEFAULT_DATASET_ROOT_DIR
         )
 
     # properties
     @property
     def name(self):
-        return self._name
+        return self.__name
 
     @name.setter
     @type_validator(str)
     def name(self, v):
-        self._name = v
+        self.__name = v
 
     @property
     def root_dir(self):
-        return self._root_dir
+        return self.__root_dir
 
     @root_dir.setter
     @type_validator(Path)
     def root_dir(self, v):
-        self._root_dir = v
+        self.__root_dir = v
 
     # cached properties
     @cached_property
@@ -398,7 +399,24 @@ class Dataset:
         )
 
     # export
-    def export(self, export_format: Format) -> str:
+    def export(self, export_format: Union[str, Format]) -> str:
+        f"""Export Dataset to Specific data formats
+
+        Args:
+            export_format (Union[str, Format]): export format. one of {list(map(lambda x: x.name, Format))}.
+
+        Returns:
+            str: exported dataset directory
+        """
+        if isinstance(export_format, str):
+            export_format = export_format.upper()
+            format_names = list(map(lambda x: x.name, Format))
+            if export_format not in format_names:
+                raise ValueError(
+                    f"{export_format} is not supported. Use one of {format_names}"
+                )
+            export_format = Format[export_format]
+
         if export_format == Format.YOLO_DETECTION:
             f"""YOLO DETECTION FORMAT
             - directory format
@@ -481,6 +499,7 @@ class Dataset:
 
             _export(self.get_imgs(train_img_ids), export_dir / "train")
             _export(self.get_imgs(val_img_ids), export_dir / "val")
+
             io.save_yaml(
                 {
                     "path": str(export_dir.absolute()),
@@ -493,6 +512,8 @@ class Dataset:
                 },
                 export_dir / "data.yaml",
             )
+
+            return str(export_dir)
 
         elif export_format == Format.YOLO_CLASSIFICATION:
             f"""YOLO CLASSIFICATION FORMAT (compatiable with torchvision.datasets.ImageFolder)
@@ -568,6 +589,7 @@ class Dataset:
                 self.get_imgs(train_img_ids), categories, export_dir / "train"
             )
             _export(self.get_imgs(val_img_ids), categories, export_dir / "val")
+
             io.save_yaml(
                 {
                     "path": str(export_dir.absolute()),
@@ -580,6 +602,8 @@ class Dataset:
                 },
                 export_dir / "data.yaml",
             )
+
+            return str(export_dir)
 
         elif export_format == Format.YOLO_SEGMENTATION:
             raise NotImplementedError

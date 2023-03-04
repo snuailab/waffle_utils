@@ -17,62 +17,62 @@ class Image(BaseField):
         date_captured: str = None,
     ):
 
-        self.img_id = self._img_id = img_id
-        self.file_name = self._file_name = file_name
-        self.width = self._width = width
-        self.height = self._height = height
-        self.date_captured = self._date_captured = date_captured
+        self.img_id = img_id
+        self.file_name = file_name
+        self.width = width
+        self.height = height
+        self.date_captured = date_captured
 
     # properties
     @property
     def img_id(self):
-        return self._img_id
+        return self.__img_id
 
     @img_id.setter
     @type_validator(int)
     def img_id(self, v):
         if v and v < 1:
             raise ValueError("id should be greater than 0.")
-        self._img_id = v
+        self.__img_id = v
 
     @property
     def file_name(self):
-        return self._file_name
+        return self.__file_name
 
     @file_name.setter
     @type_validator(str)
     def file_name(self, v):
-        self._file_name = v
+        self.__file_name = v
 
     @property
     def width(self):
-        return self._width
+        return self.__width
 
     @width.setter
     @type_validator(int)
     def width(self, v):
-        self._width = v
+        self.__width = v
 
     @property
     def height(self):
-        return self._height
+        return self.__height
 
     @height.setter
     @type_validator(int)
     def height(self, v):
-        self._height = v
+        self.__height = v
 
     @property
     def date_captured(self):
-        return self._date_captured
+        return self.__date_captured
 
     @date_captured.setter
     @type_validator(str)
     def date_captured(self, v):
         if v is None:
-            self._date_captured = datetime_now()
+            self.__date_captured = datetime_now()
         else:
-            self._date_captured = v
+            self.__date_captured = v
 
     @classmethod
     def new(
