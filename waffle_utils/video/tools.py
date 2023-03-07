@@ -19,18 +19,13 @@ def extract_frames(
     frame_rate: int = DEFAULT_FRAME_RATE,
     verbose: bool = False,
 ) -> None:
-    """Extract Frames as Individual Images from a Video File
+    f"""Extract Frames as Individual Images from a Video File
 
     Args:
         input_path (Union[str, Path]): Path to the input video file.
-        output_dir (Union[str, Path]): Path to the output directory where the
-            frame images will be saved.
-        # TODO: Check if it prints the value of `{DEFAULT_FRAME_RATE}` in
-        documentation
-        frame_rate (int, optional): Frame rate of the output images. Defaults
-            to {DEFAULT_FRAME_RATE}.
-        verbose (bool, optional): Whether to print verbose output. Defaults to
-            False.
+        output_dir (Union[str, Path]): Path to the output directory where the frame images will be saved.
+        frame_rate (int, optional): Frame rate of the output images. Defaults to {DEFAULT_FRAME_RATE}.
+        verbose (bool, optional): Whether to print verbose output. Defaults to False.
     """
 
     input_path = Path(input_path)
@@ -66,18 +61,13 @@ def create_video(
     frame_rate: int = DEFAULT_FRAME_RATE,
     verbose: bool = False,
 ) -> None:
-    """Create a Video File from a Directory of Frame Images.
+    f"""Create a Video File from a Directory of Frame Images.
 
     Args:
-        input_dir (Union[str, Path]): Path to the input directory containing
-            the frame images.
+        input_dir (Union[str, Path]): Path to the input directory containing the frame images.
         output_path (Union[str, Path]): Path to the output video file.
-        # TODO: Check if it prints the value of `{DEFAULT_FRAME_RATE}` in
-        documentation
-        frame_rate (int, optional): Frame rate of the output video. Defaults
-            to {DEFAULT_FRAME_RATE}.
-        verbose (bool, optional): Whether to print verbose output. Defaults to
-            False.
+        frame_rate (int, optional): Frame rate of the output video. Defaults to {DEFAULT_FRAME_RATE}.
+        verbose (bool, optional): Whether to print verbose output. Defaults to False.
     """
 
     input_dir = Path(input_dir)
@@ -134,8 +124,7 @@ def create_video(
         image = load_image(frame)
         out.write(image)
 
-    # Release the video writer and print a success message if verbose output
-    # is enabled
+    # Release the video writer and print a success message if verbose output is enabled
     out.release()
     if verbose:
         print(f"Video saved to {output_path}")
