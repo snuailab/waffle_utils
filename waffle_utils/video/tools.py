@@ -10,7 +10,7 @@ from waffle_utils.opencv.io import (
     load_image,
     save_image,
 )
-from waffle_utils.video.defaults import DEFAULT_FRAME_RATE
+from waffle_utils.video.config import DEFAULT_FRAME_RATE, SUPPORTED_VIDEO_EXT
 
 
 def extract_frames(
@@ -94,9 +94,32 @@ def create_video(
     first_frame = load_image(frames[0])
     height, width, _ = first_frame.shape
 
-    # Initialize video writer with the desired codec, frame rate, and frame
-    # size
-    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+    # Initialize video writer with the desired codec, frame rate, and frame size
+    ext = output_path.suffix
+
+    if ext == ".mp4":
+        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+    elif ext == ".avi":
+        if cv2.VideoWriter_fourcc(*"MJPG") == -1:
+            fourcc = cv2.VideoWriter_fourcc(*"XVID")
+        else:
+            fourcc = cv2.VideoWriter_fourcc(*"MJPG")
+    elif ext == ".wmv":
+        fourcc = cv2.VideoWriter_fourcc(*"WMV2")
+    elif ext == ".mov":
+        fourcc = cv2.VideoWriter_fourcc(*"XVID")
+    elif ext == ".flv":
+        fourcc = cv2.VideoWriter_fourcc(*"FLV1")
+    elif ext == ".mkv":
+        fourcc = cv2.VideoWriter_fourcc(*"VP80")
+    elif ext == ".mpeg" or ext == ".mpg":
+        fourcc = cv2.VideoWriter_fourcc(*"XVID")
+    else:
+        raise ValueError(
+            f"The extension {ext} is not supported.\n"
+            f"Supported extensions are {SUPPORTED_VIDEO_EXT}."
+        )
+
     out = create_video_writer(
         output_path,
         fourcc,
