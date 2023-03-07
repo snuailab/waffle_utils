@@ -10,7 +10,7 @@ from waffle_utils.opencv.io import (
     load_image,
     save_image,
 )
-from waffle_utils.video.defaults import DEFAULT_FRAME_RATE
+from waffle_utils.video.config import DEFAULT_FRAME_RATE, SUPPORTED_VIDEO_EXT
 
 
 def extract_frames(
@@ -19,18 +19,13 @@ def extract_frames(
     frame_rate: int = DEFAULT_FRAME_RATE,
     verbose: bool = False,
 ) -> None:
-    """Extract Frames as Individual Images from a Video File
+    f"""Extract Frames as Individual Images from a Video File
 
     Args:
         input_path (Union[str, Path]): Path to the input video file.
-        output_dir (Union[str, Path]): Path to the output directory where the
-            frame images will be saved.
-        # TODO: Check if it prints the value of `{DEFAULT_FRAME_RATE}` in
-        documentation
-        frame_rate (int, optional): Frame rate of the output images. Defaults
-            to {DEFAULT_FRAME_RATE}.
-        verbose (bool, optional): Whether to print verbose output. Defaults to
-            False.
+        output_dir (Union[str, Path]): Path to the output directory where the frame images will be saved.
+        frame_rate (int, optional): Frame rate of the output images. Defaults to {DEFAULT_FRAME_RATE}.
+        verbose (bool, optional): Whether to print verbose output. Defaults to False.
     """
 
     input_path = Path(input_path)
@@ -66,18 +61,13 @@ def create_video(
     frame_rate: int = DEFAULT_FRAME_RATE,
     verbose: bool = False,
 ) -> None:
-    """Create a Video File from a Directory of Frame Images.
+    f"""Create a Video File from a Directory of Frame Images.
 
     Args:
-        input_dir (Union[str, Path]): Path to the input directory containing
-            the frame images.
+        input_dir (Union[str, Path]): Path to the input directory containing the frame images.
         output_path (Union[str, Path]): Path to the output video file.
-        # TODO: Check if it prints the value of `{DEFAULT_FRAME_RATE}` in
-        documentation
-        frame_rate (int, optional): Frame rate of the output video. Defaults
-            to {DEFAULT_FRAME_RATE}.
-        verbose (bool, optional): Whether to print verbose output. Defaults to
-            False.
+        frame_rate (int, optional): Frame rate of the output video. Defaults to {DEFAULT_FRAME_RATE}.
+        verbose (bool, optional): Whether to print verbose output. Defaults to False.
     """
 
     input_dir = Path(input_dir)
@@ -94,9 +84,32 @@ def create_video(
     first_frame = load_image(frames[0])
     height, width, _ = first_frame.shape
 
-    # Initialize video writer with the desired codec, frame rate, and frame
-    # size
-    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+    # Initialize video writer with the desired codec, frame rate, and frame size
+    ext = output_path.suffix
+
+    if ext == ".mp4":
+        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+    elif ext == ".avi":
+        if cv2.VideoWriter_fourcc(*"MJPG") == -1:
+            fourcc = cv2.VideoWriter_fourcc(*"XVID")
+        else:
+            fourcc = cv2.VideoWriter_fourcc(*"MJPG")
+    elif ext == ".wmv":
+        fourcc = cv2.VideoWriter_fourcc(*"WMV2")
+    elif ext == ".mov":
+        fourcc = cv2.VideoWriter_fourcc(*"XVID")
+    elif ext == ".flv":
+        fourcc = cv2.VideoWriter_fourcc(*"FLV1")
+    elif ext == ".mkv":
+        fourcc = cv2.VideoWriter_fourcc(*"VP80")
+    elif ext == ".mpeg" or ext == ".mpg":
+        fourcc = cv2.VideoWriter_fourcc(*"XVID")
+    else:
+        raise ValueError(
+            f"The extension {ext} is not supported.\n"
+            f"Supported extensions are {SUPPORTED_VIDEO_EXT}."
+        )
+
     out = create_video_writer(
         output_path,
         fourcc,
@@ -111,8 +124,7 @@ def create_video(
         image = load_image(frame)
         out.write(image)
 
-    # Release the video writer and print a success message if verbose output
-    # is enabled
+    # Release the video writer and print a success message if verbose output is enabled
     out.release()
     if verbose:
         print(f"Video saved to {output_path}")

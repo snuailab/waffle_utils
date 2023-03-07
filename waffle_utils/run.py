@@ -5,7 +5,7 @@ from waffle_utils.dataset import Dataset
 from waffle_utils.dataset.format import Format
 from waffle_utils.file.io import unzip
 from waffle_utils.file.network import get_file_from_url
-from waffle_utils.video.defaults import DEFAULT_FRAME_RATE
+from waffle_utils.video.config import DEFAULT_FRAME_RATE
 from waffle_utils.video.tools import create_video, extract_frames
 
 app = typer.Typer()
