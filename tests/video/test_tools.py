@@ -2,7 +2,10 @@ import tempfile
 from pathlib import Path
 
 from waffle_utils.file.io import copy_file, remove_directory
-from waffle_utils.video.config import SUPPORTED_VIDEO_EXT
+from waffle_utils.video.config import (
+    SUPPORTED_IMAGE_EXTENSION,
+    SUPPORTED_VIDEO_EXTENSION,
+)
 from waffle_utils.video.tools import create_video, extract_frames
 
 
@@ -17,17 +20,26 @@ def test_tools():
         # Copy the input file to the temporary directory
         copy_file(input_path, input_path_copy)
 
-        # Extract and save individual image frames from video
-        extract_frames(input_path, output_dir, frame_rate=30, verbose=True)
+        # Test extract_frames() with all supported image extensions
+        for extension in SUPPORTED_IMAGE_EXTENSION:
+            # Extract and save individual image frames from video
+            extract_frames(
+                input_path_copy,
+                output_dir,
+                frame_rate=30,
+                output_image_extension=extension,
+                verbose=True,
+            )
 
-        # Check that the frames were extracted correctly
-        assert len(list(output_dir.glob("*.jpg"))) == 209
-        assert all(frame.is_file() for frame in output_dir.glob("*.jpg"))
+            # Check that the frames were extracted correctly
+            assert len(list(output_dir.glob("*." + extension))) == 209
+            assert all(frame.is_file() for frame in output_dir.glob("*." + extension))
 
         # Create a video file from the extracted frames with different extensions
+        # TODO: Add test for all the extensions
         input_dir = output_dir
-        for ext in SUPPORTED_VIDEO_EXT:
-            output_path = temp_dir / f"test_create_video{ext}"
+        for extension in SUPPORTED_VIDEO_EXTENSION:
+            output_path = temp_dir / f"test_create_video.{extension}"
             create_video(input_dir, output_path, frame_rate=10, verbose=True)
 
             # Check that the video file was created correctly
