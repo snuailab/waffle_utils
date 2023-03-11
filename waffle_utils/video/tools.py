@@ -5,6 +5,7 @@ import cv2
 from natsort import natsorted
 
 from waffle_utils.file.io import make_directory
+from waffle_utils.file.search import get_unique_extensions
 from waffle_utils.opencv.io import (
     create_video_capture,
     create_video_writer,
@@ -87,11 +88,7 @@ def create_video(
     output_path = Path(output_path)
 
     # Check if all files have the same extension
-    files = list(input_dir.glob("*"))
-    file_extensions = set()
-
-    for file in files:
-        file_extensions.add(file.suffix)
+    file_extensions = get_unique_extensions(input_dir)
 
     if len(file_extensions) != 1:
         raise ValueError(
@@ -99,8 +96,8 @@ def create_video(
         )
 
     # Check if the extension of the files is supported
-    unique_extension = file_extensions.pop()[1:]  # Get the unique extension existing.
-    if unique_extension not in SUPPORTED_IMAGE_EXTENSION:
+    extension = file_extensions.pop()[1:]  # Get the single extension provided
+    if extension not in SUPPORTED_IMAGE_EXTENSION:
         raise ValueError(
             f"File extension in {input_dir}: {file_extensions}.\n"
             "Must be one of {SUPPORTED_IMAGE_EXTENSION}."
@@ -111,7 +108,7 @@ def create_video(
         make_directory(input_dir)
 
     # Get a sorted list of frame image files
-    image_files = natsorted(input_dir.glob(f"*.{unique_extension}"))
+    image_files = natsorted(input_dir.glob(f"*.{extension}"))
 
     # Load the first frame to get dimensions
     first_frame = load_image(image_files[0])
