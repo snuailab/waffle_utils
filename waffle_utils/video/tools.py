@@ -28,14 +28,14 @@ def extract_frames(
     output_image_extension: str = DEFAULT_IMAGE_EXTENSION,
     verbose: bool = False,
 ) -> None:
-    """
+    f"""
     Extracts frames as individual images from a video file.
 
     Args:
         input_path (Union[str, Path]): Path to the input video file.
         output_dir (Union[str, Path]): Path to the output directory where the frame images will be saved.
-        frame_rate (int, optional): Frame rate of the output images. Defaults to DEFAULT_FRAME_RATE.
-        output_image_extension (str, optional): Extension of the output frame images. Defaults to DEFAULT_IMAGE_EXTENSION.
+        frame_rate (int, optional): Frame rate of the output images. Defaults to {DEFAULT_FRAME_RATE}.
+        output_image_extension (str, optional): Extension of the output frame images. Defaults to {DEFAULT_IMAGE_EXTENSION}.
         verbose (bool, optional): Whether to print verbose output. Defaults to False.
     """
     # Convert input_path and output_dir to Path objects
