@@ -108,7 +108,7 @@ def create_video(
     # Get the file extension of the output video file
     output_extension = output_path.suffix[1:]
 
-    # Check if the file extension is supported for image files
+    # Check if the file extension is supported for video file
     if output_extension not in SUPPORTED_VIDEO_EXTENSION:
         raise ValueError(
             f"Output video extension: {output_extension}.\n"
