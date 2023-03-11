@@ -61,7 +61,7 @@ def extract_frames(
             save_image(output_path, image)
 
             if verbose:
-                print(f"Extracted frame {count} to {output_path}.")
+                print(f"{input_path} ({count}) -> {output_path}.")
 
         success, image = video_capture.read()
 
@@ -153,7 +153,7 @@ def create_video(
     # Iterate through frames and write to the video file
     for i, frame in enumerate(image_files):
         if verbose:
-            print(f"Processing frame {i+1}/{len(image_files)}")
+            print(f"{frame} -> {output_path} ({i+1}/{len(image_files)})")
         image = load_image(frame)
         out.write(image)
 

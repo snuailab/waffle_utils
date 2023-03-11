@@ -45,9 +45,6 @@ def test_tools():
                 assert output_path.is_file()
                 assert output_path.stat().st_size > 0
 
-                # Clean up
-                remove_directory(output_dir)
-
         # Clean up
         remove_directory(temp_dir)
 
