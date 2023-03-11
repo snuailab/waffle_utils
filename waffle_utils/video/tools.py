@@ -72,7 +72,6 @@ def create_video(
     input_dir: Union[str, Path],
     output_path: Union[str, Path],
     frame_rate: int = DEFAULT_FRAME_RATE,
-    input_image_extension: str = DEFAULT_IMAGE_EXTENSION,
     verbose: bool = False,
 ) -> None:
     f"""Create a Video File from a Directory of Frame Images.
@@ -86,52 +85,61 @@ def create_video(
     input_dir = Path(input_dir)
     output_path = Path(output_path)
 
-    if input_image_extension not in SUPPORTED_IMAGE_EXTENSION:
+    # Check if all files have the same extension
+    files = list(input_dir.glob("*"))
+    file_extensions = set()
+
+    for file in files:
+        file_extensions.add(file.suffix)
+
+    if len(file_extensions) != 1:
         raise ValueError(
-            f"Invalid input_image_extension: {input_image_extension}.\n"
-            "Must be one of {SUPPORTED_IMAGE_EXTENSION}."
+            f"The files in {input_dir} do not have a consistent extension."
         )
 
-    # TODO: Raise error when the files in the `input_dir` doesn't have consistant extension.
-    # TODO: Raise error when the files in the `input_dir` doesn't have the supported image extension.
-    # HACK
-    for supported_image_extension in SUPPORTED_IMAGE_EXTENSION:
-        image_files = list(input_dir.glob(f"*.{supported_image_extension}"))
+    # Check if the extension of the files is supported
+    unique_extension = file_extensions.pop()[1:]  # Get the unique extension existing.
+    if unique_extension not in SUPPORTED_IMAGE_EXTENSION:
+        raise ValueError(
+            f"File extension in {input_dir}: {file_extensions}.\n"
+            "Must be one of {SUPPORTED_IMAGE_EXTENSION}."
+        )
 
     # Create output directory if it doesn't exist
     if not output_path.parent.exists():
         make_directory(input_dir)
 
     # Get a sorted list of frame image files
-    image_files = natsorted(input_dir.glob(f"*.{input_image_extension}"))
+    image_files = natsorted(input_dir.glob(f"*.{unique_extension}"))
 
     # Load the first frame to get dimensions
     first_frame = load_image(image_files[0])
     height, width, _ = first_frame.shape
 
     # Initialize video writer with the desired codec, frame rate, and frame size
-    ext = output_path.suffix
+    output_extension = output_path.suffix
 
-    if ext == ".mp4":
+    # Determine the appropriate fourcc codec for the output video format
+    if output_extension == ".mp4":
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-    elif ext == ".avi":
+    elif output_extension == ".avi":
         if cv2.VideoWriter_fourcc(*"MJPG") == -1:
             fourcc = cv2.VideoWriter_fourcc(*"XVID")
         else:
             fourcc = cv2.VideoWriter_fourcc(*"MJPG")
-    elif ext == ".wmv":
+    elif output_extension == ".wmv":
         fourcc = cv2.VideoWriter_fourcc(*"WMV2")
-    elif ext == ".mov":
+    elif output_extension == ".mov":
         fourcc = cv2.VideoWriter_fourcc(*"XVID")
-    elif ext == ".flv":
+    elif output_extension == ".flv":
         fourcc = cv2.VideoWriter_fourcc(*"FLV1")
-    elif ext == ".mkv":
+    elif output_extension == ".mkv":
         fourcc = cv2.VideoWriter_fourcc(*"VP80")
-    elif ext == ".mpeg" or ext == ".mpg":
+    elif output_extension == ".mpeg" or output_extension == ".mpg":
         fourcc = cv2.VideoWriter_fourcc(*"XVID")
     else:
         raise ValueError(
-            f"The extension {ext} is not supported.\n"
+            f"The extension {output_extension} is not supported.\n"
             f"Supported extensions are {SUPPORTED_VIDEO_EXTENSION}."
         )
 
