@@ -66,6 +66,7 @@ def extract_frames(
         success, image = video_capture.read()
 
     video_capture.release()
+    print(f"Output: {output_dir}/")
 
 
 def create_video(
@@ -159,5 +160,4 @@ def create_video(
 
     # Release the video writer and print a success message if verbose output is enabled
     out.release()
-    if verbose:
-        print(f"Video saved to {output_path}")
+    print(f"Output: {output_path}")
