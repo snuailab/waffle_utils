@@ -1,19 +1,38 @@
 from pathlib import Path
 from typing import List, Optional, Union
 
+from natsort import natsorted
 
-def get_files(directory: Union[str, Path], extension: Union[str, None] = None) -> list:
+from waffle_utils.image import SUPPORTED_IMAGE_EXTENSION
+from waffle_utils.video import SUPPORTED_VIDEO_EXTENSION
+
+
+def get_files(
+    directory: Union[str, Path], extension: Union[list[str], str, None] = None
+) -> list:
     """
     Retrieves a list of files in a directory, optionally filtered by extension.
 
     Args:
         directory (Union[str, Path]): Path to the directory.
-        extension (Union[str, None], optional): File extension to filter the files by. Defaults to None.
+        extension (Union[list[str], str, None], optional): File extension to filter the files by. Defaults to None.
 
     Returns:
         list: List of file paths.
     """
-    raise NotImplementedError("`get_files` is not implemented yet.")
+    directory = Path(directory)
+
+    if isinstance(extension, str):
+        extension = [extension]
+    elif extension is None:
+        extension = []
+
+    files = directory.glob(f"**/*")
+    files = list(
+        filter(lambda x: x.is_file and x.suffix[1:] in extension, files)
+    )
+
+    return natsorted(files)
 
 
 def get_image_files(directory: Union[str, Path]) -> list:
@@ -26,7 +45,7 @@ def get_image_files(directory: Union[str, Path]) -> list:
     Returns:
         list: List of image file paths.
     """
-    raise NotImplementedError("`get_image_files` is not implemented yet.")
+    return get_files(directory, SUPPORTED_IMAGE_EXTENSION)
 
 
 def get_video_files(directory: Union[str, Path]) -> list:
@@ -39,7 +58,7 @@ def get_video_files(directory: Union[str, Path]) -> list:
     Returns:
         list: List of video file paths.
     """
-    raise NotImplementedError("`get_video_files` is not implemented yet.")
+    return get_files(directory, SUPPORTED_VIDEO_EXTENSION)
 
 
 def get_file_extensions(

@@ -1,24 +1,18 @@
 from pathlib import Path
 from typing import Union
 
-import cv2
 from natsort import natsorted
 
 from waffle_utils.file.io import make_directory
-from waffle_utils.file.search import get_file_extensions
-from waffle_utils.opencv.io import (
-    create_video_capture,
-    create_video_writer,
-    load_image,
-    save_image,
-)
-from waffle_utils.video.config import (
-    DEFAULT_FRAME_RATE,
+from waffle_utils.file.search import get_image_files
+from waffle_utils.image import (
     DEFAULT_IMAGE_EXTENSION,
     SUPPORTED_IMAGE_EXTENSION,
-    SUPPORTED_VIDEO_EXTENSION,
-    FOURCC_MAP,
 )
+from waffle_utils.image.io import load_image, save_image
+from waffle_utils.video.io import create_video_capture, create_video_writer
+
+DEFAULT_FRAME_RATE = 30
 
 
 def extract_frames(
@@ -54,13 +48,17 @@ def extract_frames(
         output_dir.mkdir(parents=True, exist_ok=True)
 
     # Extract frames from the video file
-    video_capture = create_video_capture(input_path)
-    fps = video_capture.get(cv2.CAP_PROP_FPS)
-    success, image = video_capture.read()
-    count = 0
+    video_capture, meta = create_video_capture(input_path)
+
+    fps = meta["fps"]
     frame_interval = int(round(fps / frame_rate))
-    while success:
-        count += 1
+
+    count = 0
+    while True:
+        success, image = video_capture.read()
+        if not success:
+            break
+
         # Only extract frames at the specified frame rate
         if count % frame_interval == 0:
             output_path = output_dir / f"{count}.{output_image_extension}"
@@ -69,7 +67,7 @@ def extract_frames(
             if verbose:
                 print(f"{input_path} ({count}) -> {output_path}.")
 
-        success, image = video_capture.read()
+        count += 1
 
     # Release the video capture
     video_capture.release()
@@ -95,40 +93,19 @@ def create_video(
     input_dir = Path(input_dir)
     output_path = Path(output_path)
 
-    # Get the file extension of the input frame images
-    extension = get_file_extensions(input_dir, single=True)
-
-    # Check if the file extension is supported for image files
-    if extension not in SUPPORTED_IMAGE_EXTENSION:
-        raise ValueError(
-            f"File extension in {input_dir}: {extension}.\n"
-            f"Must be one of {SUPPORTED_IMAGE_EXTENSION}."
-        )
-
-    # Get the file extension of the output video file
-    output_extension = output_path.suffix[1:]
-
-    # Check if the file extension is supported for image files
-    if output_extension not in SUPPORTED_VIDEO_EXTENSION:
-        raise ValueError(
-            f"Output video extension: {output_extension}.\n"
-            f"Must be one of {SUPPORTED_VIDEO_EXTENSION}."
-        )
+    # Get image files
+    image_files = get_image_files(input_dir)
 
     # Create output directory if it doesn't exist
     if not output_path.parent.exists():
         make_directory(input_dir)
 
-    # Get a sorted list of frame image files
-    image_files = natsorted(input_dir.glob(f"*.{extension}"))
-
     # Load the first frame to get dimensions
     first_frame = load_image(image_files[0])
-    height, width, _ = first_frame.shape
+    height, width = first_frame.shape[:2]
 
     # Determine the appropriate fourcc codec for the output video format
-    fourcc = FOURCC_MAP[output_extension]
-    out = create_video_writer(output_path, fourcc, frame_rate, (width, height))
+    out = create_video_writer(output_path, frame_rate, (width, height))
 
     # Iterate through frames and write to the video file
     for i, frame in enumerate(image_files):
