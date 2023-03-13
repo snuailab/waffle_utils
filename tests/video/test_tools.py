@@ -1,4 +1,3 @@
-import tempfile
 from pathlib import Path
 
 from waffle_utils.file.io import copy_file
@@ -35,5 +34,6 @@ def test_tools(tmpdir: Path):
     assert output_path.stat().st_size > 0
 
 
+# FIXME: It doesn't generate the temporary file automatically
 if __name__ == "__main__":
     test_tools()
