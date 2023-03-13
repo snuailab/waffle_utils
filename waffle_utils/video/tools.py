@@ -1,8 +1,6 @@
 from pathlib import Path
 from typing import Union
 
-from natsort import natsorted
-
 from waffle_utils.file.io import make_directory
 from waffle_utils.file.search import get_image_files
 from waffle_utils.image import (
