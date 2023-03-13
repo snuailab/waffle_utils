@@ -1,4 +1,3 @@
-import tempfile
 from pathlib import Path
 
 from waffle_utils.file.io import copy_file
@@ -33,9 +32,7 @@ def test_tools(tmpdir: Path):
 
             # Create a video file from the extracted frames
             input_dir = output_dir  # Use the images directory as input
-            output_path = Path(
-                tmpdir / f"test_{subdir_name}.{video_extension}"
-            )
+            output_path = Path(tmpdir / f"test_{subdir_name}.{video_extension}")
             create_video(input_dir, output_path, frame_rate=10, verbose=True)
 
             # Check that the video file was created correctly
@@ -43,5 +40,6 @@ def test_tools(tmpdir: Path):
             assert output_path.stat().st_size > 0
 
 
+# FIXME: It doesn't generate the temporary file automatically
 if __name__ == "__main__":
     test_tools()

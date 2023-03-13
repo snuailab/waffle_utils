@@ -3,11 +3,9 @@ from typing import Union
 
 from waffle_utils.file.io import make_directory
 from waffle_utils.file.search import get_image_files
-from waffle_utils.image import (
-    DEFAULT_IMAGE_EXTENSION,
-    SUPPORTED_IMAGE_EXTENSION,
-)
+from waffle_utils.image import DEFAULT_IMAGE_EXTENSION, SUPPORTED_IMAGE_EXTENSION
 from waffle_utils.image.io import load_image, save_image
+from waffle_utils.log.config import logger
 from waffle_utils.video.io import create_video_capture, create_video_writer
 
 DEFAULT_FRAME_RATE = 30
@@ -69,7 +67,7 @@ def extract_frames(
 
     # Release the video capture
     video_capture.release()
-    print(f"Output: {output_dir}/")
+    logger.info(f"Output: {output_dir}/")
 
 
 def create_video(
@@ -114,4 +112,4 @@ def create_video(
 
     # Release the video writer
     out.release()
-    print(f"Output: {output_path}")
+    logger.info(f"Output: {output_path}")
