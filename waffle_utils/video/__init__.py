@@ -1,6 +1,8 @@
 import cv2
 
 SUPPORTED_VIDEO_EXTENSION = ["mp4", "avi", "wmv", "mov", "flv", "mkv", "mpeg"]
+DEFAULT_VIDEO_EXTENSION = SUPPORTED_VIDEO_EXTENSION[0]
+
 FOURCC_MAP = {
     "mp4": cv2.VideoWriter_fourcc(*"mp4v"),
     "avi": cv2.VideoWriter_fourcc(*"xvid")
