@@ -417,6 +417,12 @@ class Dataset:
                 )
             export_format = Format[export_format]
 
+        export_dir: Path = self.export_dir / export_format.name
+        if export_dir.exists():
+            io.remove_directory(export_dir)
+            warnings.warn(f"{export_dir} already exists. Removing exist export and override.")
+        io.make_directory(export_dir)
+
         if export_format == Format.YOLO_DETECTION:
             f"""YOLO DETECTION FORMAT
             - directory format
@@ -493,9 +499,6 @@ class Dataset:
 
             train_img_ids: list = io.load_json(train_set_file)
             val_img_ids: list = io.load_json(val_set_file)
-
-            export_dir = self.export_dir / export_format.name
-            io.make_directory(export_dir)
 
             io.make_directory(export_dir / "train")
             io.make_directory(export_dir / "val")
@@ -584,9 +587,6 @@ class Dataset:
 
             train_img_ids: list = io.load_json(train_set_file)
             val_img_ids: list = io.load_json(val_set_file)
-
-            export_dir = self.export_dir / export_format.name
-            io.make_directory(export_dir)
 
             io.make_directory(export_dir / "train")
             io.make_directory(export_dir / "val")
