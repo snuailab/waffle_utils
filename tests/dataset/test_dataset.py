@@ -117,7 +117,6 @@ def test_import_coco():
 
         ds.split_train_val(train_split_ratio=0.8)
 
-        # todo export
         exported_dataset_dir = ds.export(Format.YOLO_DETECTION)
         exported_dataset_dir = ds.export("yolo_detection")
         exported_dataset_dir = ds.export("YOLO_DETECTION")
@@ -127,3 +126,7 @@ def test_import_coco():
         exported_dataset_dir = ds.export("yolo_classification")
         exported_dataset_dir = ds.export("YOLO_CLASSIFICATION")
         assert Path(exported_dataset_dir).exists()
+
+        ds.split_train_val(train_split_ratio=0)
+        exported_dataset_dir = ds.export(Format.YOLO_DETECTION)
+        assert len(list((Path(exported_dataset_dir) / "train").rglob("*"))) == 0
