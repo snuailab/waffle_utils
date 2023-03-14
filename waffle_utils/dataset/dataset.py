@@ -497,8 +497,12 @@ class Dataset:
             export_dir = self.export_dir / export_format.name
             io.make_directory(export_dir)
 
-            _export(self.get_imgs(train_img_ids), export_dir / "train")
-            _export(self.get_imgs(val_img_ids), export_dir / "val")
+            io.make_directory(export_dir / "train")
+            io.make_directory(export_dir / "val")
+            if train_img_ids:
+                _export(self.get_imgs(train_img_ids), export_dir / "train")
+            if val_img_ids:
+                _export(self.get_imgs(val_img_ids), export_dir / "val")
 
             io.save_yaml(
                 {
@@ -584,11 +588,12 @@ class Dataset:
             export_dir = self.export_dir / export_format.name
             io.make_directory(export_dir)
 
-            categories: list[Category] = self.get_cats()
-            _export(
-                self.get_imgs(train_img_ids), categories, export_dir / "train"
-            )
-            _export(self.get_imgs(val_img_ids), categories, export_dir / "val")
+            io.make_directory(export_dir / "train")
+            io.make_directory(export_dir / "val")
+            if train_img_ids:
+                _export(self.get_imgs(train_img_ids), self.get_cats(), export_dir / "train")
+            if val_img_ids:
+                _export(self.get_imgs(val_img_ids), self.get_cats(), export_dir / "val")
 
             io.save_yaml(
                 {
@@ -597,7 +602,7 @@ class Dataset:
                     "val": "val",
                     "names": {
                         category.cat_id - 1: category.name
-                        for category in categories
+                        for category in self.get_cats()
                     },
                 },
                 export_dir / "data.yaml",
