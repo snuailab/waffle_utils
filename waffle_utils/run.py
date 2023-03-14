@@ -5,6 +5,15 @@ from waffle_utils.dataset import Dataset
 from waffle_utils.dataset.format import Format
 from waffle_utils.file.io import unzip
 from waffle_utils.file.network import get_file_from_url
+from waffle_utils.image import (
+    DEFAULT_IMAGE_EXTENSION,
+    SUPPORTED_IMAGE_EXTENSION,
+)
+from waffle_utils.video.tools import (
+    DEFAULT_FRAME_RATE,
+    create_video,
+    extract_frames,
+)
 
 app = typer.Typer()
 
@@ -91,6 +100,47 @@ def _export(
         )
 
     ds.export(Format[export_format])
+
+
+# video processing docs
+input_video_path_docs = "Path to input video file"
+input_frames_dir_docs = "Directory to input frame image files"
+output_frames_dir_docs = "Directory to output frame image files"
+output_video_path_docs = f"Path for output video file. Example: path/to/video.mp4. Supported extensions: {SUPPORTED_VIDEO_EXTENSION}"
+frame_rate_docs = "Frame rate"
+output_image_extension_docs = (
+    f"Output image extension. {SUPPORTED_IMAGE_EXTENSION}"
+)
+verbose_docs = "Verbose"
+
+
+@app.command(name="extract_frames")
+def _extract_frames(
+    input_path: str = typer.Option(..., help=input_video_path_docs),
+    output_dir: str = typer.Option(..., help=output_frames_dir_docs),
+    frame_rate: int = typer.Option(DEFAULT_FRAME_RATE, help=frame_rate_docs),
+    output_image_extension: str = typer.Option(
+        DEFAULT_IMAGE_EXTENSION, help=output_image_extension_docs
+    ),
+    verbose: bool = typer.Option(False, help=verbose_docs),
+):
+    """Extract Frames from a Video File"""
+
+    extract_frames(
+        input_path, output_dir, frame_rate, output_image_extension, verbose
+    )
+
+
+@app.command(name="create_video")
+def _create_video(
+    input_dir: str = typer.Option(..., help=input_frames_dir_docs),
+    output_path: str = typer.Option(..., help=output_video_path_docs),
+    frame_rate: int = typer.Option(DEFAULT_FRAME_RATE, help=frame_rate_docs),
+    verbose: bool = typer.Option(False, help=verbose_docs),
+):
+    """Create a Video from Frame Image Files"""
+
+    create_video(input_dir, output_path, frame_rate, verbose)
 
 
 if __name__ == "__main__":

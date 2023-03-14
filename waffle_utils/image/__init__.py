@@ -1,0 +1,2 @@
+SUPPORTED_IMAGE_EXTENSION = ["jpg", "jpeg", "png", "bmp", "tif", "tiff"]
+DEFAULT_IMAGE_EXTENSION = SUPPORTED_IMAGE_EXTENSION[0]
