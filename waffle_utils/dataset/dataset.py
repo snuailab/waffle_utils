@@ -16,8 +16,9 @@ class Dataset:
     DEFAULT_DATASET_ROOT_DIR = Path("./datasets")
     RAW_IMAGE_DIR = Path("raw")
     IMAGE_DIR = Path("images")
-    ANNOTATION_DIR = Path("labels")
+    ANNOTATION_DIR = Path("annotations")
     CATEGORY_DIR = Path("categories")
+    PREDICTION_DIR = Path("predictions")
     EXPORT_DIR = Path("exports")
     SET_DIR = Path("sets")
 
@@ -70,6 +71,10 @@ class Dataset:
     @cached_property
     def annotation_dir(self) -> Path:
         return self.dataset_dir / Dataset.ANNOTATION_DIR
+
+    @cached_property
+    def prediction_dir(self) -> Path:
+        return self.dataset_dir / Dataset.PREDICTION_DIR
 
     @cached_property
     def category_dir(self) -> Path:
@@ -201,22 +206,27 @@ class Dataset:
         coco = io.load_json(coco_file)
         for image_dict in coco["images"]:
             image_id = image_dict.pop("id")
-            ds.add_imgs([Image.from_dict({
-                **image_dict,
-                "image_id": image_id
-            })])
+            ds.add_imgs(
+                [Image.from_dict({**image_dict, "image_id": image_id})]
+            )
         for annotation_dict in coco["annotations"]:
             annotation_id = annotation_dict.pop("id")
-            ds.add_anns([Annotation.from_dict({
-                **annotation_dict,
-                "annotation_id": annotation_id
-            })])
+            ds.add_anns(
+                [
+                    Annotation.from_dict(
+                        {**annotation_dict, "annotation_id": annotation_id}
+                    )
+                ]
+            )
         for category_dict in coco["categories"]:
             category_id = category_dict.pop("id")
-            ds.add_cats([Category.from_dict({
-                **category_dict,
-                "category_id": category_id
-            })])
+            ds.add_cats(
+                [
+                    Category.from_dict(
+                        {**category_dict, "category_id": category_id}
+                    )
+                ]
+            )
 
         # copy raw images
         io.copy_files_to_directory(coco_root_dir, ds.raw_image_dir)
@@ -296,7 +306,10 @@ class Dataset:
         return [
             Category.from_json(f)
             for f in (
-                [self.category_dir / f"{category_id}.json" for category_id in category_ids]
+                [
+                    self.category_dir / f"{category_id}.json"
+                    for category_id in category_ids
+                ]
                 if category_ids
                 else self.category_dir.glob("*.json")
             )
@@ -320,6 +333,26 @@ class Dataset:
             return [
                 Annotation.from_json(f)
                 for f in self.annotation_dir.glob("*/*.json")
+            ]
+
+    def get_preds(self, image_id: int = None) -> list[Annotation]:
+        """Get "Prediction"s.
+
+        Args:
+            image_id (int, optional): image id. None for all "Prediction"s. Defaults to None.
+
+        Returns:
+            list[Annotation]: "Prediction" list
+        """
+        if image_id:
+            return [
+                Annotation.from_json(f)
+                for f in self.prediction_dir.glob(f"{image_id}/*.json")
+            ]
+        else:
+            return [
+                Annotation.from_json(f)
+                for f in self.prediction_dir.glob("*/*.json")
             ]
 
     def get_labeled_imgs(self) -> list[Image]:
@@ -370,7 +403,23 @@ class Dataset:
         """
         for item in annotations:
             item_path = (
-                self.annotation_dir / f"{item.image_id}" / f"{item.annotation_id}.json"
+                self.annotation_dir
+                / f"{item.image_id}"
+                / f"{item.annotation_id}.json"
+            )
+            io.save_json(item.to_dict(), item_path, create_directory=True)
+
+    def add_preds(self, predictions: list[Annotation]):
+        """Add "Annotation"s to dataset.
+
+        Args:
+            annotations (list[Annotation]): list of "Annotation"s
+        """
+        for item in predictions:
+            item_path = (
+                self.prediction_dir
+                / f"{item.image_id}"
+                / f"{item.annotation_id}.json"
             )
             io.save_json(item.to_dict(), item_path, create_directory=True)
 
@@ -428,7 +477,9 @@ class Dataset:
         export_dir: Path = self.export_dir / export_format.name
         if export_dir.exists():
             io.remove_directory(export_dir)
-            warnings.warn(f"{export_dir} already exists. Removing exist export and override.")
+            warnings.warn(
+                f"{export_dir} already exists. Removing exist export and override."
+            )
         io.make_directory(export_dir)
 
         if export_format == Format.YOLO_DETECTION:
@@ -478,7 +529,9 @@ class Dataset:
                     W = image.width
                     H = image.height
 
-                    annotations: list[Annotation] = self.get_anns(image.image_id)
+                    annotations: list[Annotation] = self.get_anns(
+                        image.image_id
+                    )
                     label_txts = []
                     for annotation in annotations:
                         x1, y1, w, h = annotation.bbox
@@ -560,12 +613,16 @@ class Dataset:
                 export_dir: Path,
             ):
                 img_dir = export_dir
-                cat_dict: dict = {cat.category_id: cat.name for cat in categories}
+                cat_dict: dict = {
+                    cat.category_id: cat.name for cat in categories
+                }
 
                 for image in images:
                     image_path = self.raw_image_dir / f"{image.file_name}"
 
-                    annotations: list[Annotation] = self.get_anns(image.image_id)
+                    annotations: list[Annotation] = self.get_anns(
+                        image.image_id
+                    )
                     # TODO: multi label supports.
                     # TODO: check if YOLO will support multi label.
                     if len(annotations) > 1:
@@ -599,9 +656,17 @@ class Dataset:
             io.make_directory(export_dir / "train")
             io.make_directory(export_dir / "val")
             if train_image_ids:
-                _export(self.get_imgs(train_image_ids), self.get_cats(), export_dir / "train")
+                _export(
+                    self.get_imgs(train_image_ids),
+                    self.get_cats(),
+                    export_dir / "train",
+                )
             if val_image_ids:
-                _export(self.get_imgs(val_image_ids), self.get_cats(), export_dir / "val")
+                _export(
+                    self.get_imgs(val_image_ids),
+                    self.get_cats(),
+                    export_dir / "val",
+                )
 
             io.save_yaml(
                 {

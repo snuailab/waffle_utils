@@ -1,5 +1,6 @@
-import tempfile
 from pathlib import Path
+
+import pytest
 
 from waffle_utils.dataset import Dataset
 from waffle_utils.dataset.fields import Annotation as A
@@ -25,7 +26,12 @@ def test_annotations():
     A.from_dict(ann.to_dict())
 
     ann = A.segmentation(
-        annotation_id=1, image_id=1, category_id=1, bbox=bbox, segmentation=segmentation, area=200
+        annotation_id=1,
+        image_id=1,
+        category_id=1,
+        bbox=bbox,
+        segmentation=segmentation,
+        area=200,
     )
     A.from_dict(ann.to_dict())
 
@@ -43,22 +49,37 @@ def test_annotations():
     ann = A.regression(annotation_id=1, image_id=1, value=3.0)
     A.from_dict(ann.to_dict())
 
-    ann = A.text_recognition(annotation_id=1, image_id=1, caption="hello world")
+    ann = A.text_recognition(
+        annotation_id=1, image_id=1, caption="hello world"
+    )
     A.from_dict(ann.to_dict())
 
     assert not ann.is_prediction()
 
     # score test (for prediction)
-    ann = A.classification(annotation_id=1, image_id=1, category_id=1, score=0.8)
+    ann = A.classification(
+        annotation_id=1, image_id=1, category_id=1, score=0.8
+    )
     A.from_dict(ann.to_dict())
 
     ann = A.object_detection(
-        annotation_id=1, image_id=1, category_id=1, bbox=bbox, area=10000, score=0.8
+        annotation_id=1,
+        image_id=1,
+        category_id=1,
+        bbox=bbox,
+        area=10000,
+        score=0.8,
     )
     A.from_dict(ann.to_dict())
 
     ann = A.segmentation(
-        annotation_id=1, image_id=1, category_id=1, bbox=bbox, segmentation=segmentation, area=200, score=0.8
+        annotation_id=1,
+        image_id=1,
+        category_id=1,
+        bbox=bbox,
+        segmentation=segmentation,
+        area=200,
+        score=0.8,
     )
     A.from_dict(ann.to_dict())
 
@@ -70,11 +91,13 @@ def test_annotations():
         keypoints=keypoints,
         num_keypoints=2,
         area=200,
-        score=[0.8, 0.5]
+        score=[0.8, 0.5],
     )
     A.from_dict(ann.to_dict())
 
-    ann = A.text_recognition(annotation_id=1, image_id=1, caption="hello world", score=0.5)
+    ann = A.text_recognition(
+        annotation_id=1, image_id=1, caption="hello world", score=0.5
+    )
     A.from_dict(ann.to_dict())
 
     assert ann.is_prediction()
@@ -124,43 +147,57 @@ def test_categories():
     C.from_dict(cat.to_dict())
 
 
-def test_import_coco():
+@pytest.fixture
+def dataset(tmpdir: Path):
     url = "https://github.com/snuailab/waffle_utils/raw/main/mnist.zip"
 
-    with tempfile.TemporaryDirectory() as dummy_tmp_dir:
-        dummy_tmp_dir = Path(dummy_tmp_dir)
-        dummy_zip_file = dummy_tmp_dir / "mnist.zip"
-        dummy_data_root_dir = dummy_tmp_dir / "tmp/dataset"
-        dummy_dataset_name = "mnist"
+    dummy_zip_file = tmpdir / "mnist.zip"
+    dummy_extract_dir = tmpdir / "extract"
+    dummy_coco_root_dir = tmpdir / "extract/raw"
+    dummy_coco_file = tmpdir / "extract/exports/coco.json"
 
-        dummy_extract_dir = dummy_tmp_dir / "tmp/extract"
-        dummy_coco_root_dir = dummy_tmp_dir / "tmp/extract/raw"
-        dummy_coco_file = dummy_tmp_dir / "tmp/extract/exports/coco.json"
+    network.get_file_from_url(url, dummy_zip_file, create_directory=True)
+    io.unzip(dummy_zip_file, dummy_extract_dir, create_directory=True)
 
-        network.get_file_from_url(url, dummy_zip_file, create_directory=True)
-        io.unzip(dummy_zip_file, dummy_extract_dir, create_directory=True)
+    ds = Dataset.from_coco(
+        "mnist",
+        dummy_coco_file,
+        Path(dummy_coco_root_dir),
+        root_dir=tmpdir / "datasets",
+    )
+    ds.split_train_val(0.8)
+    return ds
 
-        ds = Dataset.from_coco(
-            dummy_dataset_name,
-            dummy_coco_file,
-            dummy_coco_root_dir,
-            root_dir=dummy_data_root_dir,
-        )
 
-        ds = Dataset.from_directory(dummy_dataset_name, dummy_data_root_dir)
+def test_import_coco(dataset: Dataset):
 
-        ds.split_train_val(train_split_ratio=0.8)
+    exported_dataset_dir = dataset.export(Format.YOLO_DETECTION)
+    exported_dataset_dir = dataset.export("yolo_detection")
+    exported_dataset_dir = dataset.export("YOLO_DETECTION")
+    assert Path(exported_dataset_dir).exists()
 
-        exported_dataset_dir = ds.export(Format.YOLO_DETECTION)
-        exported_dataset_dir = ds.export("yolo_detection")
-        exported_dataset_dir = ds.export("YOLO_DETECTION")
-        assert Path(exported_dataset_dir).exists()
+    exported_dataset_dir = dataset.export(Format.YOLO_CLASSIFICATION)
+    exported_dataset_dir = dataset.export("yolo_classification")
+    exported_dataset_dir = dataset.export("YOLO_CLASSIFICATION")
+    assert Path(exported_dataset_dir).exists()
 
-        exported_dataset_dir = ds.export(Format.YOLO_CLASSIFICATION)
-        exported_dataset_dir = ds.export("yolo_classification")
-        exported_dataset_dir = ds.export("YOLO_CLASSIFICATION")
-        assert Path(exported_dataset_dir).exists()
+    dataset.split_train_val(train_split_ratio=0)
+    exported_dataset_dir = dataset.export(Format.YOLO_DETECTION)
+    assert len(list((Path(exported_dataset_dir) / "train").rglob("*"))) == 0
 
-        ds.split_train_val(train_split_ratio=0)
-        exported_dataset_dir = ds.export(Format.YOLO_DETECTION)
-        assert len(list((Path(exported_dataset_dir) / "train").rglob("*"))) == 0
+
+def test_predictions(dataset: Dataset):
+
+    dataset.add_preds(
+        [
+            A.object_detection(
+                annotation_id=1,
+                image_id=1,
+                category_id=1,
+                bbox=[1, 2, 3, 4],
+                area=1,
+                score=0.5,
+            )
+        ]
+    )
+    assert (dataset.prediction_dir / "1" / "1.json").exists()
