@@ -7,10 +7,10 @@ class Annotation(BaseField):
     def __init__(
         self,
         # required
-        ann_id: int,
-        img_id: int,
+        annotation_id: int,
+        image_id: int,
         # optional
-        cat_id: int = None,
+        category_id: int = None,
         bbox: list[float] = None,
         segmentation: list[float] = None,
         area: float = None,
@@ -22,9 +22,9 @@ class Annotation(BaseField):
         iscrowd: int = None,
     ):
 
-        self.ann_id = ann_id
-        self.img_id = img_id
-        self.cat_id = cat_id
+        self.annotation_id = annotation_id
+        self.image_id = image_id
+        self.category_id = category_id
         self.bbox = bbox
         self.segmentation = segmentation
         self.area = area
@@ -36,43 +36,41 @@ class Annotation(BaseField):
 
     # properties
     @property
-    def ann_id(self):
-        return self.__ann_id
+    def annotation_id(self):
+        return self.__annotation_id
 
-    @ann_id.setter
+    @annotation_id.setter
     @type_validator(int)
-    def ann_id(self, v):
+    def annotation_id(self, v):
         if v is None:
-            raise ValueError("ann_id should not be None")
+            raise ValueError("annotation_id should not be None")
         if v and v < 1:
             raise ValueError("id should be greater than 0.")
-        self.__ann_id = v
+        self.__annotation_id = v
 
     @property
-    def img_id(self):
-        return self.__img_id
+    def image_id(self):
+        return self.__image_id
 
-    @img_id.setter
+    @image_id.setter
     @type_validator(int)
-    def img_id(self, v):
+    def image_id(self, v):
         if v is None:
-            raise ValueError("img_id should not be None")
+            raise ValueError("image_id should not be None")
         if v and v < 1:
             raise ValueError("id should be greater than 0.")
-        self.__img_id = v
+        self.__image_id = v
 
     @property
-    def cat_id(self):
-        return self.__cat_id
+    def category_id(self):
+        return self.__category_id
 
-    @cat_id.setter
+    @category_id.setter
     @type_validator(int)
-    def cat_id(self, v):
-        if v is None:
-            raise ValueError("cat_id should not be None")
+    def category_id(self, v):
         if v and v < 1:
             raise ValueError("id should be greater than 0.")
-        self.__cat_id = v
+        self.__category_id = v
 
     @property
     def bbox(self):
@@ -160,9 +158,9 @@ class Annotation(BaseField):
     @classmethod
     def new(
         cls,
-        ann_id: int,
-        img_id: int,
-        cat_id: int = None,
+        annotation_id: int,
+        image_id: int,
+        category_id: int = None,
         bbox: list[float] = None,
         segmentation: list[float] = None,
         area: int = None,
@@ -175,9 +173,9 @@ class Annotation(BaseField):
         """Annotation Format
 
         Args:
-            ann_id (int): annotaion id. natural number.
-            img_id (int): image id. natural number.
-            cat_id (int): category id. natural number.
+            annotation_id (int): annotaion id. natural number.
+            image_id (int): image id. natural number.
+            category_id (int): category id. natural number.
             bbox (list[float]): [x1, y1, w, h].
             segmentation (list[float]): [x1, y1, x2, y2, x3, y3, ...].
             area (int): bbox area.
@@ -193,9 +191,9 @@ class Annotation(BaseField):
             Annotation: annotation class
         """
         return cls(
-            ann_id=ann_id,
-            img_id=img_id,
-            cat_id=cat_id,
+            annotation_id=annotation_id,
+            image_id=image_id,
+            category_id=category_id,
             bbox=bbox,
             segmentation=segmentation,
             area=area,
@@ -208,26 +206,26 @@ class Annotation(BaseField):
 
     @classmethod
     def classification(
-        cls, ann_id: int, img_id: int, cat_id: int
+        cls, annotation_id: int, image_id: int, category_id: int
     ) -> "Annotation":
         """Classification Annotation Format
 
         Args:
-            ann_id (int): annotaion id. natural number.
-            img_id (int): image id. natural number.
-            cat_id (int): category id. natural number.
+            annotation_id (int): annotaion id. natural number.
+            image_id (int): image id. natural number.
+            category_id (int): category id. natural number.
 
         Returns:
             Annotation: annotation class
         """
-        return cls(ann_id, img_id, cat_id=cat_id)
+        return cls(annotation_id, image_id, category_id=category_id)
 
     @classmethod
     def object_detection(
         cls,
-        ann_id: int,
-        img_id: int,
-        cat_id: int,
+        annotation_id: int,
+        image_id: int,
+        category_id: int,
         bbox: list[float],
         area: int,
         iscrowd: int = False,
@@ -235,9 +233,9 @@ class Annotation(BaseField):
         """Object Detection Annotation Format
 
         Args:
-            ann_id (int): annotaion id. natural number.
-            img_id (int): image id. natural number.
-            cat_id (int): category id. natural number.
+            annotation_id (int): annotaion id. natural number.
+            image_id (int): image id. natural number.
+            category_id (int): category id. natural number.
             bbox (list[float]): [x1, y1, w, h].
             area (int): bbox area.
             iscrowd (int, optional): is crowd or not. Default to False.
@@ -246,9 +244,9 @@ class Annotation(BaseField):
             Annotation: annotation class
         """
         return cls(
-            ann_id,
-            img_id,
-            cat_id=cat_id,
+            annotation_id,
+            image_id,
+            category_id=category_id,
             bbox=bbox,
             area=area,
             iscrowd=iscrowd,
@@ -257,9 +255,9 @@ class Annotation(BaseField):
     @classmethod
     def segmentation(
         cls,
-        ann_id: int,
-        img_id: int,
-        cat_id: int,
+        annotation_id: int,
+        image_id: int,
+        category_id: int,
         bbox: list[float],
         segmentation: list[float],
         area: int,
@@ -268,9 +266,9 @@ class Annotation(BaseField):
         """Segmentation Annotation Format
 
         Args:
-            ann_id (int): annotaion id. natural number.
-            img_id (int): image id. natural number.
-            cat_id (int): category id. natural number.
+            annotation_id (int): annotaion id. natural number.
+            image_id (int): image id. natural number.
+            category_id (int): category id. natural number.
             bbox (list[float]): [x1, y1, w, h].
             segmentation (list[float]): [x1, y1, x2, y2, x3, y3, ...].
             area (int): segmentation segmentation area.
@@ -280,9 +278,9 @@ class Annotation(BaseField):
             Annotation: annotation class
         """
         return cls(
-            ann_id,
-            img_id,
-            cat_id=cat_id,
+            annotation_id,
+            image_id,
+            category_id=category_id,
             bbox=bbox,
             segmentation=segmentation,
             area=area,
@@ -292,9 +290,9 @@ class Annotation(BaseField):
     @classmethod
     def keypoint_detection(
         cls,
-        ann_id: int,
-        img_id: int,
-        cat_id: int,
+        annotation_id: int,
+        image_id: int,
+        category_id: int,
         bbox: list[float],
         keypoints: list[float],
         num_keypoints: int,
@@ -305,9 +303,9 @@ class Annotation(BaseField):
         """Keypoint Detection Annotation Format
 
         Args:
-            ann_id (int): annotaion id. natural number.
-            img_id (int): image id. natural number.
-            cat_id (int): category id. natural number.
+            annotation_id (int): annotaion id. natural number.
+            image_id (int): image id. natural number.
+            category_id (int): category id. natural number.
             bbox (list[float]): [x1, y1, w, h].
             keypoints (list[float]):
                 [x1, y1, v1(visible flag), x2, y2, v2(visible flag), ...].
@@ -321,9 +319,9 @@ class Annotation(BaseField):
             Annotation: annotation class
         """
         return cls(
-            ann_id,
-            img_id,
-            cat_id=cat_id,
+            annotation_id,
+            image_id,
+            category_id=category_id,
             bbox=bbox,
             keypoints=keypoints,
             num_keypoints=num_keypoints,
@@ -334,37 +332,37 @@ class Annotation(BaseField):
 
     @classmethod
     def regression(
-        cls, ann_id: int, img_id: int, value: float
+        cls, annotation_id: int, image_id: int, value: float
     ) -> "Annotation":
         """Regression Annotation Format
 
         Args:
-            ann_id (int): annotaion id. natural number.
-            img_id (int): image id. natural number.
-            cat_id (int): category id. natural number.
+            annotation_id (int): annotaion id. natural number.
+            image_id (int): image id. natural number.
+            category_id (int): category id. natural number.
             value (float): regression value.
 
         Returns:
             Annotation: annotation class
         """
-        return cls(ann_id, img_id, value=value)
+        return cls(annotation_id, image_id, value=value)
 
     @classmethod
     def text_recognition(
-        cls, ann_id: int, img_id: int, caption: str
+        cls, annotation_id: int, image_id: int, caption: str
     ) -> "Annotation":
         """Text Recognition Annotation Format
 
         Args:
-            ann_id (int): annotaion id. natural number.
-            img_id (int): image id. natural number.
-            cat_id (int): category id. natural number.
+            annotation_id (int): annotaion id. natural number.
+            image_id (int): image id. natural number.
+            category_id (int): category id. natural number.
             caption (str): string.
 
         Returns:
             Annotation: annotation class
         """
-        return cls(ann_id, img_id, caption=caption)
+        return cls(annotation_id, image_id, caption=caption)
 
     def to_dict(self) -> dict:
         """Get Dictionary of Annotation Data
@@ -373,10 +371,10 @@ class Annotation(BaseField):
             dict: annotation dictionary.
         """
 
-        ann = {"ann_id": self.ann_id, "image_id": self.img_id}
+        ann = {"annotation_id": self.annotation_id, "image_id": self.image_id}
 
-        if self.cat_id is not None:
-            ann["category_id"] = self.cat_id
+        if self.category_id is not None:
+            ann["category_id"] = self.category_id
         if self.bbox is not None:
             ann["bbox"] = self.bbox
         if self.segmentation is not None:

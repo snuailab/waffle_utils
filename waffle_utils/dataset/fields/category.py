@@ -7,7 +7,7 @@ class Category(BaseField):
     def __init__(
         self,
         # required
-        cat_id: int,
+        category_id: int,
         supercategory: str,
         name: str,
         # for keypoint detection
@@ -15,7 +15,7 @@ class Category(BaseField):
         skeleton: list[list[int]] = None,
     ):
 
-        self.cat_id = cat_id
+        self.category_id = category_id
         self.supercategory = supercategory
         self.name = name
         self.keypoints = keypoints
@@ -23,17 +23,17 @@ class Category(BaseField):
 
     # properties
     @property
-    def cat_id(self):
-        return self.__cat_id
+    def category_id(self):
+        return self.__category_id
 
-    @cat_id.setter
+    @category_id.setter
     @type_validator(int)
-    def cat_id(self, v):
+    def category_id(self, v):
         if v is None:
-            raise ValueError("cat_id should not be None")
+            raise ValueError("category_id should not be None")
         if v and v < 1:
             raise ValueError("id should be greater than 0.")
-        self.__cat_id = v
+        self.__category_id = v
 
     @property
     def supercategory(self):
@@ -75,7 +75,7 @@ class Category(BaseField):
     @classmethod
     def new(
         cls,
-        cat_id: int,
+        category_id: int,
         supercategory: str,
         name: str,
         keypoints: list[str] = None,
@@ -84,7 +84,7 @@ class Category(BaseField):
         """Category Format
 
         Args:
-            cat_id (int): category id. natural number.
+            category_id (int): category id. natural number.
             supercategory (str): supercategory name.
             name (str): category name.
             keypoints (list[str]): category name.
@@ -93,60 +93,60 @@ class Category(BaseField):
         Returns:
             Category: category class
         """
-        return cls(cat_id, supercategory, name, keypoints, skeleton)
+        return cls(category_id, supercategory, name, keypoints, skeleton)
 
     @classmethod
     def classification(
-        cls, cat_id: int, supercategory: str, name: str
+        cls, category_id: int, supercategory: str, name: str
     ) -> "Category":
         """Classification Category Format
 
         Args:
-            cat_id (int): category id. natural number.
+            category_id (int): category id. natural number.
             supercategory (str): supercategory name.
             name (str): category name.
 
         Returns:
             Category: category class
         """
-        return cls(cat_id, supercategory, name)
+        return cls(category_id, supercategory, name)
 
     @classmethod
     def object_detection(
-        cls, cat_id: int, supercategory: str, name: str
+        cls, category_id: int, supercategory: str, name: str
     ) -> "Category":
         """Object Detection Category Format
 
         Args:
-            cat_id (int): category id. natural number.
+            category_id (int): category id. natural number.
             supercategory (str): supercategory name.
             name (str): category name.
 
         Returns:
             Category: category class
         """
-        return cls(cat_id, supercategory, name)
+        return cls(category_id, supercategory, name)
 
     @classmethod
     def segmentation(
-        cls, cat_id: int, supercategory: str, name: str
+        cls, category_id: int, supercategory: str, name: str
     ) -> "Category":
         """Segmentation Category Format
 
         Args:
-            cat_id (int): category id. natural number.
+            category_id (int): category id. natural number.
             supercategory (str): supercategory name.
             name (str): category name.
 
         Returns:
             Category: category class
         """
-        return cls(cat_id, supercategory, name)
+        return cls(category_id, supercategory, name)
 
     @classmethod
     def keypoint_detection(
         cls,
-        cat_id: int,
+        category_id: int,
         supercategory: str,
         name: str,
         keypoints: list[str],
@@ -155,7 +155,7 @@ class Category(BaseField):
         """Keypoint Detection Category Format
 
         Args:
-            cat_id (int): category id. natural number.
+            category_id (int): category id. natural number.
             supercategory (str): supercategory name.
             name (str): category name.
             keypoints (list[str]): category name.
@@ -165,24 +165,24 @@ class Category(BaseField):
             Category: category class
         """
         return cls(
-            cat_id, supercategory, name, keypoints=keypoints, skeleton=skeleton
+            category_id, supercategory, name, keypoints=keypoints, skeleton=skeleton
         )
 
     @classmethod
     def text_recognition(
-        cls, cat_id: int, supercategory: str, name: str
+        cls, category_id: int, supercategory: str, name: str
     ) -> "Category":
         """Text Recognition Category Format
 
         Args:
-            cat_id (int): category id. natural number.
+            category_id (int): category id. natural number.
             supercategory (str): supercategory name.
             name (str): category name.
 
         Returns:
             Category: category class
         """
-        return cls(cat_id, supercategory, name)
+        return cls(category_id, supercategory, name)
 
     def to_dict(self) -> dict:
         """Get Dictionary of Category
@@ -192,7 +192,7 @@ class Category(BaseField):
         """
 
         cat = {
-            "cat_id": self.cat_id,
+            "category_id": self.category_id,
             "supercategory": self.supercategory,
             "name": self.name,
         }
