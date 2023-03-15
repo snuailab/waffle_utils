@@ -188,7 +188,7 @@ def test_import_coco(dataset: Dataset):
 
 def test_predictions(dataset: Dataset):
 
-    dataset.add_preds(
+    dataset.add_predictions(
         [
             A.object_detection(
                 annotation_id=1,
