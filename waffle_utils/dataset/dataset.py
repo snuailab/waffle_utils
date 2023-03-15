@@ -233,24 +233,6 @@ class Dataset:
 
         return ds
 
-    @classmethod
-    def from_nas(cls) -> "Dataset":
-        # download to root_dir from nas
-        # return cls(root_dir=root_dir)
-        raise NotImplementedError
-
-    @classmethod
-    def from_minio(cls) -> "Dataset":
-        # download to root_dir from minio
-        # return cls(root_dir=root_dir)
-        raise NotImplementedError
-
-    @classmethod
-    def from_ftp(cls) -> "Dataset":
-        # download to root_dir from ftp
-        # return cls(root_dir=root_dir)
-        raise NotImplementedError
-
     def initialize(self):
         """Initialize Dataset.
         It creates necessary directories under {dataset_root_dir}/{dataset_name}.
