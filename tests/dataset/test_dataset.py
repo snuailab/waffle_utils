@@ -15,6 +15,7 @@ def test_annotations():
     segmentation = [110, 110, 130, 130, 110, 130]
     keypoints = [0, 0, 0, 130, 130, 1, 110, 130, 2]
 
+    # annotation test
     ann = A.classification(annotation_id=1, image_id=1, category_id=1)
     A.from_dict(ann.to_dict())
 
@@ -44,6 +45,39 @@ def test_annotations():
 
     ann = A.text_recognition(annotation_id=1, image_id=1, caption="hello world")
     A.from_dict(ann.to_dict())
+
+    assert not ann.is_prediction()
+
+    # score test (for prediction)
+    ann = A.classification(annotation_id=1, image_id=1, category_id=1, score=0.8)
+    A.from_dict(ann.to_dict())
+
+    ann = A.object_detection(
+        annotation_id=1, image_id=1, category_id=1, bbox=bbox, area=10000, score=0.8
+    )
+    A.from_dict(ann.to_dict())
+
+    ann = A.segmentation(
+        annotation_id=1, image_id=1, category_id=1, bbox=bbox, segmentation=segmentation, area=200, score=0.8
+    )
+    A.from_dict(ann.to_dict())
+
+    ann = A.keypoint_detection(
+        annotation_id=1,
+        image_id=1,
+        category_id=1,
+        bbox=bbox,
+        keypoints=keypoints,
+        num_keypoints=2,
+        area=200,
+        score=[0.8, 0.5]
+    )
+    A.from_dict(ann.to_dict())
+
+    ann = A.text_recognition(annotation_id=1, image_id=1, caption="hello world", score=0.5)
+    A.from_dict(ann.to_dict())
+
+    assert ann.is_prediction()
 
 
 def test_images():

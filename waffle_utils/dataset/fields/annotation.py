@@ -1,3 +1,5 @@
+from typing import Union
+
 from waffle_utils.utils import type_validator
 
 from .base_field import BaseField
@@ -20,6 +22,7 @@ class Annotation(BaseField):
         value: float = None,
         #
         iscrowd: int = None,
+        score: Union[float, list[float]] = None
     ):
 
         self.annotation_id = annotation_id
@@ -33,6 +36,7 @@ class Annotation(BaseField):
         self.caption = caption
         self.value = value
         self.iscrowd = iscrowd
+        self.score = score
 
     # properties
     @property
@@ -154,6 +158,15 @@ class Annotation(BaseField):
     def iscrowd(self, v):
         self.__iscrowd = v
 
+    @property
+    def score(self):
+        return self.__score
+
+    @score.setter
+    # @type_validator(float)  # TODO: need to upgrade type_validator
+    def score(self, v):
+        self.__score = v
+
     # factories
     @classmethod
     def new(
@@ -169,6 +182,7 @@ class Annotation(BaseField):
         caption: str = None,
         value: float = None,
         iscrowd: int = None,
+        score: float = None
     ) -> "Annotation":
         """Annotation Format
 
@@ -185,7 +199,8 @@ class Annotation(BaseField):
             num_keypoints: number of labeled keypoints
             caption (str): string.
             value (float): regression value.
-            iscrowd (int, optional): is crowd or not. Default to False.
+            iscrowd (int, optional): is crowd or not. Default to None.
+            score (float, optional): prediction score. Default to None.
 
         Returns:
             Annotation: annotation class
@@ -202,11 +217,12 @@ class Annotation(BaseField):
             caption=caption,
             value=value,
             iscrowd=iscrowd,
+            score=score
         )
 
     @classmethod
     def classification(
-        cls, annotation_id: int, image_id: int, category_id: int
+        cls, annotation_id: int, image_id: int, category_id: int, score: float = None
     ) -> "Annotation":
         """Classification Annotation Format
 
@@ -214,11 +230,12 @@ class Annotation(BaseField):
             annotation_id (int): annotaion id. natural number.
             image_id (int): image id. natural number.
             category_id (int): category id. natural number.
+            score (float, optional): prediction score. Default to None.
 
         Returns:
             Annotation: annotation class
         """
-        return cls(annotation_id, image_id, category_id=category_id)
+        return cls(annotation_id, image_id, category_id=category_id, score=score)
 
     @classmethod
     def object_detection(
@@ -228,7 +245,8 @@ class Annotation(BaseField):
         category_id: int,
         bbox: list[float],
         area: int,
-        iscrowd: int = False,
+        iscrowd: int = 0,
+        score: float = None
     ) -> "Annotation":
         """Object Detection Annotation Format
 
@@ -238,7 +256,8 @@ class Annotation(BaseField):
             category_id (int): category id. natural number.
             bbox (list[float]): [x1, y1, w, h].
             area (int): bbox area.
-            iscrowd (int, optional): is crowd or not. Default to False.
+            iscrowd (int, optional): is crowd or not. Default to 0.
+            score (float, optional): prediction score. Default to None.
 
         Returns:
             Annotation: annotation class
@@ -250,6 +269,7 @@ class Annotation(BaseField):
             bbox=bbox,
             area=area,
             iscrowd=iscrowd,
+            score=score,
         )
 
     @classmethod
@@ -262,6 +282,7 @@ class Annotation(BaseField):
         segmentation: list[float],
         area: int,
         iscrowd: int = 0,
+        score: float = None
     ) -> "Annotation":
         """Segmentation Annotation Format
 
@@ -273,6 +294,7 @@ class Annotation(BaseField):
             segmentation (list[float]): [x1, y1, x2, y2, x3, y3, ...].
             area (int): segmentation segmentation area.
             iscrowd (int, optional): is crowd or not. Default to 0.
+            score (float, optional): prediction score. Default to None.
 
         Returns:
             Annotation: annotation class
@@ -285,6 +307,7 @@ class Annotation(BaseField):
             segmentation=segmentation,
             area=area,
             iscrowd=iscrowd,
+            score=score,
         )
 
     @classmethod
@@ -298,7 +321,8 @@ class Annotation(BaseField):
         num_keypoints: int,
         area: int,
         segmentation: list[float] = None,
-        iscrowd: int = False,
+        iscrowd: int = 0,
+        score: list[float] = None
     ) -> "Annotation":
         """Keypoint Detection Annotation Format
 
@@ -314,6 +338,7 @@ class Annotation(BaseField):
             area (int): segmentation segmentation or bbox area.
             segmentation (list[float], optional): [x1, y1, x2, y2, x3, y3, ...].
             iscrowd (int, optional): is crowd or not. Default to 0.
+            score (list[float], optional): prediction scores. Default to None.
 
         Returns:
             Annotation: annotation class
@@ -328,6 +353,7 @@ class Annotation(BaseField):
             segmentation=segmentation,
             area=area,
             iscrowd=iscrowd,
+            score=score
         )
 
     @classmethod
@@ -349,7 +375,7 @@ class Annotation(BaseField):
 
     @classmethod
     def text_recognition(
-        cls, annotation_id: int, image_id: int, caption: str
+        cls, annotation_id: int, image_id: int, caption: str, score: float = None
     ) -> "Annotation":
         """Text Recognition Annotation Format
 
@@ -358,11 +384,12 @@ class Annotation(BaseField):
             image_id (int): image id. natural number.
             category_id (int): category id. natural number.
             caption (str): string.
+            score (float, optional): prediction score. Default to None.
 
         Returns:
             Annotation: annotation class
         """
-        return cls(annotation_id, image_id, caption=caption)
+        return cls(annotation_id, image_id, caption=caption, score=score)
 
     def to_dict(self) -> dict:
         """Get Dictionary of Annotation Data
@@ -389,5 +416,10 @@ class Annotation(BaseField):
             ann["value"] = self.value
         if self.iscrowd is not None:
             ann["iscrowd"] = self.iscrowd
+        if self.score is not None:
+            ann["score"] = self.score
 
         return ann
+
+    def is_prediction(self):
+        return not self.score is None
