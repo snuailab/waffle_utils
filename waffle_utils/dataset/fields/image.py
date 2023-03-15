@@ -1,4 +1,3 @@
-from waffle_utils.file import io
 from waffle_utils.log import datetime_now
 from waffle_utils.utils import type_validator
 
@@ -31,6 +30,8 @@ class Image(BaseField):
     @img_id.setter
     @type_validator(int)
     def img_id(self, v):
+        if v is None:
+            raise ValueError("img_id should not be None")
         if v and v < 1:
             raise ValueError("id should be greater than 0.")
         self.__img_id = v
@@ -97,46 +98,6 @@ class Image(BaseField):
         """
         return cls(img_id, file_name, width, height, date_captured)
 
-    @classmethod
-    def from_dict(cls, d: dict) -> "Image":
-        """Image Format from dictionary
-
-        Args:
-            d (dict): Image dictionary
-
-        Returns:
-            Image: image class
-        """
-        img_id = d.get("id", None)
-        file_name = d.get("file_name", None)
-        width = d.get("width", None)
-        height = d.get("height", None)
-        date_captured = d.get("date_captured", datetime_now())
-
-        if img_id is None:
-            raise ValueError("id field missing")
-        if file_name is None:
-            raise ValueError("file_name field missing")
-        if width is None:
-            raise ValueError("width field missing")
-        if height is None:
-            raise ValueError("height field missing")
-
-        return cls(img_id, file_name, width, height, date_captured)
-
-    @classmethod
-    def from_json(cls, f: str) -> "Image":
-        """Image Format from json file
-
-        Args:
-            d (dict): Image json file
-
-        Returns:
-            Image: Image class
-        """
-        d: dict = io.load_json(f)
-        return cls.from_dict(d)
-
     def to_dict(self) -> dict:
         """Get Dictionary of Category
 
@@ -145,7 +106,7 @@ class Image(BaseField):
         """
 
         cat = {
-            "id": self.img_id,
+            "img_id": self.img_id,
             "file_name": self.file_name,
             "width": self.width,
             "height": self.height,

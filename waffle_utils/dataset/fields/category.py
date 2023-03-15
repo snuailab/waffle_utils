@@ -1,4 +1,3 @@
-from waffle_utils.file import io
 from waffle_utils.utils import type_validator
 
 from . import BaseField
@@ -30,6 +29,8 @@ class Category(BaseField):
     @cat_id.setter
     @type_validator(int)
     def cat_id(self, v):
+        if v is None:
+            raise ValueError("cat_id should not be None")
         if v and v < 1:
             raise ValueError("id should be greater than 0.")
         self.__cat_id = v
@@ -93,44 +94,6 @@ class Category(BaseField):
             Category: category class
         """
         return cls(cat_id, supercategory, name, keypoints, skeleton)
-
-    @classmethod
-    def from_dict(cls, d: dict) -> "Category":
-        """Category Format from dictionary
-
-        Args:
-            d (dict): Category dictionary
-
-        Returns:
-            Category: category class
-        """
-        cat_id = d.get("id", None)
-        supercategory = d.get("supercategory", None)
-        name = d.get("name", None)
-        keypoints = d.get("keypoints", None)
-        skeleton = d.get("skeleton", None)
-
-        if cat_id is None:
-            raise ValueError("id field missing")
-        if supercategory is None:
-            raise ValueError("file_name field missing")
-        if name is None:
-            raise ValueError("width field missing")
-
-        return cls(cat_id, supercategory, name, keypoints, skeleton)
-
-    @classmethod
-    def from_json(cls, f: str) -> "Category":
-        """Category Format from json file
-
-        Args:
-            d (dict): Category json file
-
-        Returns:
-            Category: Category class
-        """
-        d: dict = io.load_json(f)
-        return cls.from_dict(d)
 
     @classmethod
     def classification(
@@ -229,7 +192,7 @@ class Category(BaseField):
         """
 
         cat = {
-            "id": self.cat_id,
+            "cat_id": self.cat_id,
             "supercategory": self.supercategory,
             "name": self.name,
         }

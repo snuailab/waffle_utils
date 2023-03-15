@@ -1,4 +1,3 @@
-from waffle_utils.file import io
 from waffle_utils.utils import type_validator
 
 from .base_field import BaseField
@@ -13,21 +12,21 @@ class Annotation(BaseField):
         # optional
         cat_id: int = None,
         bbox: list[float] = None,
-        mask: list[int] = None,
+        segmentation: list[float] = None,
         area: float = None,
         keypoints: list[float] = None,
         num_keypoints: int = None,
         caption: str = None,
         value: float = None,
         #
-        iscrowd: bool = None,
+        iscrowd: int = None,
     ):
 
         self.ann_id = ann_id
         self.img_id = img_id
         self.cat_id = cat_id
         self.bbox = bbox
-        self.mask = mask
+        self.segmentation = segmentation
         self.area = area
         self.keypoints = keypoints
         self.num_keypoints = num_keypoints
@@ -43,6 +42,8 @@ class Annotation(BaseField):
     @ann_id.setter
     @type_validator(int)
     def ann_id(self, v):
+        if v is None:
+            raise ValueError("ann_id should not be None")
         if v and v < 1:
             raise ValueError("id should be greater than 0.")
         self.__ann_id = v
@@ -54,6 +55,8 @@ class Annotation(BaseField):
     @img_id.setter
     @type_validator(int)
     def img_id(self, v):
+        if v is None:
+            raise ValueError("img_id should not be None")
         if v and v < 1:
             raise ValueError("id should be greater than 0.")
         self.__img_id = v
@@ -65,6 +68,8 @@ class Annotation(BaseField):
     @cat_id.setter
     @type_validator(int)
     def cat_id(self, v):
+        if v is None:
+            raise ValueError("cat_id should not be None")
         if v and v < 1:
             raise ValueError("id should be greater than 0.")
         self.__cat_id = v
@@ -81,17 +86,17 @@ class Annotation(BaseField):
         self.__bbox = v
 
     @property
-    def mask(self):
-        return self.__mask
+    def segmentation(self):
+        return self.__segmentation
 
-    @mask.setter
+    @segmentation.setter
     @type_validator(list)
-    def mask(self, v):
+    def segmentation(self, v):
         if v and len(v) % 2 != 0 and len(v) < 6:
             raise ValueError(
-                "the length of mask should be at least 6 and divisible by 2."
+                "the length of segmentation should be at least 6 and divisible by 2."
             )
-        self.__mask = v
+        self.__segmentation = v
 
     @property
     def area(self):
@@ -147,7 +152,7 @@ class Annotation(BaseField):
         return self.__iscrowd
 
     @iscrowd.setter
-    @type_validator(bool)
+    @type_validator(int)
     def iscrowd(self, v):
         self.__iscrowd = v
 
@@ -158,14 +163,14 @@ class Annotation(BaseField):
         ann_id: int,
         img_id: int,
         cat_id: int = None,
-        bbox: list[int] = None,
-        mask: list[int] = None,
+        bbox: list[float] = None,
+        segmentation: list[float] = None,
         area: int = None,
-        keypoints: list[int] = None,
+        keypoints: list[float] = None,
         num_keypoints: int = None,
         caption: str = None,
         value: float = None,
-        iscrowd: bool = None,
+        iscrowd: int = None,
     ) -> "Annotation":
         """Annotation Format
 
@@ -173,88 +178,33 @@ class Annotation(BaseField):
             ann_id (int): annotaion id. natural number.
             img_id (int): image id. natural number.
             cat_id (int): category id. natural number.
-            bbox (list[int]): [x1, y1, w, h].
-            mask (list[int]): [x1, y1, x2, y2, x3, y3, ...].
+            bbox (list[float]): [x1, y1, w, h].
+            segmentation (list[float]): [x1, y1, x2, y2, x3, y3, ...].
             area (int): bbox area.
-            keypoints (list[int]):
+            keypoints (list[float]):
                 [x1, y1, v1(visible flag), x2, y2, v2(visible flag), ...].
                 visible flag is one of [0(Not labeled), 1(Labeled but not visible), 2(labeled and visible)]
             num_keypoints: number of labeled keypoints
             caption (str): string.
             value (float): regression value.
-            iscrowd (bool, optional): is crowd or not. Default to False.
+            iscrowd (int, optional): is crowd or not. Default to False.
 
         Returns:
             Annotation: annotation class
         """
         return cls(
-            ann_id,
-            img_id,
-            cat_id,
-            bbox,
-            mask,
-            area,
-            keypoints,
-            num_keypoints,
-            caption,
-            value,
-            iscrowd,
+            ann_id=ann_id,
+            img_id=img_id,
+            cat_id=cat_id,
+            bbox=bbox,
+            segmentation=segmentation,
+            area=area,
+            keypoints=keypoints,
+            num_keypoints=num_keypoints,
+            caption=caption,
+            value=value,
+            iscrowd=iscrowd,
         )
-
-    @classmethod
-    def from_dict(cls, d: dict) -> "Annotation":
-        """Annotation Format from dictionary
-
-        Args:
-            d (dict): Annotation dictionary
-
-        Returns:
-            Annotation: Annotation class
-        """
-
-        ann_id = d.get("id", None)
-        img_id = d.get("image_id", None)
-        cat_id = d.get("category_id", None)
-        bbox = d.get("bbox", None)
-        mask = d.get("mask", None)
-        area = d.get("area", None)
-        keypoints = d.get("keypoints", None)
-        num_keypoints = d.get("num_keypoints", None)
-        caption = d.get("caption", None)
-        value = d.get("value", None)
-        iscrowd = bool(d.get("iscrowd", None))
-
-        if ann_id is None:
-            raise ValueError("id field missing")
-        if img_id is None:
-            raise ValueError("image_id field missing")
-
-        return cls(
-            ann_id,
-            img_id,
-            cat_id,
-            bbox,
-            mask,
-            area,
-            keypoints,
-            num_keypoints,
-            caption,
-            value,
-            iscrowd,
-        )
-
-    @classmethod
-    def from_json(cls, f: str) -> "Annotation":
-        """Annotation Format from json file
-
-        Args:
-            d (dict): Annotation json file
-
-        Returns:
-            Annotation: Annotation class
-        """
-        d: dict = io.load_json(f)
-        return cls.from_dict(d)
 
     @classmethod
     def classification(
@@ -278,9 +228,9 @@ class Annotation(BaseField):
         ann_id: int,
         img_id: int,
         cat_id: int,
-        bbox: list[int],
+        bbox: list[float],
         area: int,
-        iscrowd: bool = False,
+        iscrowd: int = False,
     ) -> "Annotation":
         """Object Detection Annotation Format
 
@@ -288,9 +238,9 @@ class Annotation(BaseField):
             ann_id (int): annotaion id. natural number.
             img_id (int): image id. natural number.
             cat_id (int): category id. natural number.
-            bbox (list[int]): [x1, y1, w, h].
+            bbox (list[float]): [x1, y1, w, h].
             area (int): bbox area.
-            iscrowd (bool, optional): is crowd or not. Default to False.
+            iscrowd (int, optional): is crowd or not. Default to False.
 
         Returns:
             Annotation: annotation class
@@ -310,10 +260,10 @@ class Annotation(BaseField):
         ann_id: int,
         img_id: int,
         cat_id: int,
-        bbox: list[int],
-        mask: list[int],
+        bbox: list[float],
+        segmentation: list[float],
         area: int,
-        iscrowd: bool = False,
+        iscrowd: int = 0,
     ) -> "Annotation":
         """Segmentation Annotation Format
 
@@ -321,10 +271,10 @@ class Annotation(BaseField):
             ann_id (int): annotaion id. natural number.
             img_id (int): image id. natural number.
             cat_id (int): category id. natural number.
-            bbox (list[int]): [x1, y1, w, h].
-            mask (list[int]): [x1, y1, x2, y2, x3, y3, ...].
-            area (int): segmentation mask area.
-            iscrowd (bool, optional): is crowd or not. Default to False.
+            bbox (list[float]): [x1, y1, w, h].
+            segmentation (list[float]): [x1, y1, x2, y2, x3, y3, ...].
+            area (int): segmentation segmentation area.
+            iscrowd (int, optional): is crowd or not. Default to 0.
 
         Returns:
             Annotation: annotation class
@@ -334,7 +284,7 @@ class Annotation(BaseField):
             img_id,
             cat_id=cat_id,
             bbox=bbox,
-            mask=mask,
+            segmentation=segmentation,
             area=area,
             iscrowd=iscrowd,
         )
@@ -345,12 +295,12 @@ class Annotation(BaseField):
         ann_id: int,
         img_id: int,
         cat_id: int,
-        bbox: list[int],
-        keypoints: list[int],
+        bbox: list[float],
+        keypoints: list[float],
         num_keypoints: int,
         area: int,
-        mask: list[int] = None,
-        iscrowd: bool = False,
+        segmentation: list[float] = None,
+        iscrowd: int = False,
     ) -> "Annotation":
         """Keypoint Detection Annotation Format
 
@@ -358,14 +308,14 @@ class Annotation(BaseField):
             ann_id (int): annotaion id. natural number.
             img_id (int): image id. natural number.
             cat_id (int): category id. natural number.
-            bbox (list[int]): [x1, y1, w, h].
-            keypoints (list[int]):
+            bbox (list[float]): [x1, y1, w, h].
+            keypoints (list[float]):
                 [x1, y1, v1(visible flag), x2, y2, v2(visible flag), ...].
                 visible flag is one of [0(Not labeled), 1(Labeled but not visible), 2(labeled and visible)]
             num_keypoints: number of labeled keypoints
-            area (int): segmentation mask or bbox area.
-            mask (list[int], optional): [x1, y1, x2, y2, x3, y3, ...].
-            iscrowd (bool, optional): is crowd or not. Default to False.
+            area (int): segmentation segmentation or bbox area.
+            segmentation (list[float], optional): [x1, y1, x2, y2, x3, y3, ...].
+            iscrowd (int, optional): is crowd or not. Default to 0.
 
         Returns:
             Annotation: annotation class
@@ -377,7 +327,7 @@ class Annotation(BaseField):
             bbox=bbox,
             keypoints=keypoints,
             num_keypoints=num_keypoints,
-            mask=mask,
+            segmentation=segmentation,
             area=area,
             iscrowd=iscrowd,
         )
@@ -423,14 +373,14 @@ class Annotation(BaseField):
             dict: annotation dictionary.
         """
 
-        ann = {"id": self.ann_id, "image_id": self.img_id}
+        ann = {"ann_id": self.ann_id, "image_id": self.img_id}
 
         if self.cat_id is not None:
             ann["category_id"] = self.cat_id
         if self.bbox is not None:
             ann["bbox"] = self.bbox
-        if self.mask is not None:
-            ann["segmentations"] = self.mask
+        if self.segmentation is not None:
+            ann["segmentation"] = self.segmentation
         if self.area is not None:
             ann["area"] = self.area
         if self.keypoints is not None:
@@ -440,6 +390,6 @@ class Annotation(BaseField):
         if self.value is not None:
             ann["value"] = self.value
         if self.iscrowd is not None:
-            ann["iscrowd"] = self.iscrowd * 1
+            ann["iscrowd"] = self.iscrowd
 
         return ann
