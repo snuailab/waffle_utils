@@ -1,3 +1,5 @@
+import logging
+
 import typer
 from rich import print
 
@@ -5,16 +7,14 @@ from waffle_utils.dataset import Dataset
 from waffle_utils.dataset.format import Format
 from waffle_utils.file.io import unzip
 from waffle_utils.file.network import get_file_from_url
-from waffle_utils.image import (
-    DEFAULT_IMAGE_EXTENSION,
-    SUPPORTED_IMAGE_EXTENSION,
-)
+from waffle_utils.image import DEFAULT_IMAGE_EXTENSION, SUPPORTED_IMAGE_EXTENSION
+from waffle_utils.log import config
 from waffle_utils.video import SUPPORTED_VIDEO_EXTENSION
-from waffle_utils.video.tools import (
-    DEFAULT_FRAME_RATE,
-    create_video,
-    extract_frames,
-)
+from waffle_utils.video.tools import DEFAULT_FRAME_RATE, create_video, extract_frames
+
+config.get_logger()
+logger = logging.getLogger(__name__)
+
 
 app = typer.Typer()
 
@@ -42,7 +42,7 @@ def _get_file_from_url(
     create_directory: bool = True,
 ):
     get_file_from_url(url, file_path, create_directory=create_directory)
-    print(f"Downloading File {file_path} has been completed.")
+    logger.info(f"Downloading File {file_path} has been completed.")
 
 
 @app.command(name="unzip")
