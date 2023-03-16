@@ -16,8 +16,9 @@ class Dataset:
     DEFAULT_DATASET_ROOT_DIR = Path("./datasets")
     RAW_IMAGE_DIR = Path("raw")
     IMAGE_DIR = Path("images")
-    ANNOTATION_DIR = Path("labels")
+    ANNOTATION_DIR = Path("annotations")
     CATEGORY_DIR = Path("categories")
+    PREDICTION_DIR = Path("predictions")
     EXPORT_DIR = Path("exports")
     SET_DIR = Path("sets")
 
@@ -70,6 +71,10 @@ class Dataset:
     @cached_property
     def annotation_dir(self) -> Path:
         return self.dataset_dir / Dataset.ANNOTATION_DIR
+
+    @cached_property
+    def prediction_dir(self) -> Path:
+        return self.dataset_dir / Dataset.PREDICTION_DIR
 
     @cached_property
     def category_dir(self) -> Path:
@@ -199,39 +204,34 @@ class Dataset:
 
         # parse coco annotation file
         coco = io.load_json(coco_file)
-        ds.add_imgs([Image.from_dict(image) for image in coco["images"]])
-        ds.add_anns(
-            [
-                Annotation.from_dict(annotation)
-                for annotation in coco["annotations"]
-            ]
-        )
-        ds.add_cats(
-            [Category.from_dict(category) for category in coco["categories"]]
-        )
+        for image_dict in coco["images"]:
+            image_id = image_dict.pop("id")
+            ds.add_images(
+                [Image.from_dict({**image_dict, "image_id": image_id})]
+            )
+        for annotation_dict in coco["annotations"]:
+            annotation_id = annotation_dict.pop("id")
+            ds.add_annotations(
+                [
+                    Annotation.from_dict(
+                        {**annotation_dict, "annotation_id": annotation_id}
+                    )
+                ]
+            )
+        for category_dict in coco["categories"]:
+            category_id = category_dict.pop("id")
+            ds.add_categories(
+                [
+                    Category.from_dict(
+                        {**category_dict, "category_id": category_id}
+                    )
+                ]
+            )
 
         # copy raw images
         io.copy_files_to_directory(coco_root_dir, ds.raw_image_dir)
 
         return ds
-
-    @classmethod
-    def from_nas(cls) -> "Dataset":
-        # download to root_dir from nas
-        # return cls(root_dir=root_dir)
-        raise NotImplementedError
-
-    @classmethod
-    def from_minio(cls) -> "Dataset":
-        # download to root_dir from minio
-        # return cls(root_dir=root_dir)
-        raise NotImplementedError
-
-    @classmethod
-    def from_ftp(cls) -> "Dataset":
-        # download to root_dir from ftp
-        # return cls(root_dir=root_dir)
-        raise NotImplementedError
 
     def initialize(self):
         """Initialize Dataset.
@@ -258,11 +258,11 @@ class Dataset:
         )
 
     # get
-    def get_imgs(self, img_ids: list[int] = None) -> list[Image]:
+    def get_images(self, image_ids: list[int] = None) -> list[Image]:
         """Get "Image"s.
 
         Args:
-            img_ids (list[int], optional): id list. None for all "Image"s. Defaults to None.
+            image_ids (list[int], optional): id list. None for all "Image"s. Defaults to None.
 
         Returns:
             list[Image]: "Image" list
@@ -270,17 +270,17 @@ class Dataset:
         return [
             Image.from_json(f)
             for f in (
-                [self.image_dir / f"{img_id}.json" for img_id in img_ids]
-                if img_ids
+                [self.image_dir / f"{image_id}.json" for image_id in image_ids]
+                if image_ids
                 else self.image_dir.glob("*.json")
             )
         ]
 
-    def get_cats(self, cat_ids: list[int] = None) -> list[Category]:
+    def get_categories(self, category_ids: list[int] = None) -> list[Category]:
         """Get "Category"s.
 
         Args:
-            cat_ids (list[int], optional): id list. None for all "Category"s. Defaults to None.
+            category_ids (list[int], optional): id list. None for all "Category"s. Defaults to None.
 
         Returns:
             list[Category]: "Category" list
@@ -288,25 +288,28 @@ class Dataset:
         return [
             Category.from_json(f)
             for f in (
-                [self.category_dir / f"{cat_id}.json" for cat_id in cat_ids]
-                if cat_ids
+                [
+                    self.category_dir / f"{category_id}.json"
+                    for category_id in category_ids
+                ]
+                if category_ids
                 else self.category_dir.glob("*.json")
             )
         ]
 
-    def get_anns(self, img_id: int = None) -> list[Annotation]:
+    def get_annotations(self, image_id: int = None) -> list[Annotation]:
         """Get "Annotation"s.
 
         Args:
-            img_id (int, optional): image id. None for all "Annotation"s. Defaults to None.
+            image_id (int, optional): image id. None for all "Annotation"s. Defaults to None.
 
         Returns:
             list[Annotation]: "Annotation" list
         """
-        if img_id:
+        if image_id:
             return [
                 Annotation.from_json(f)
-                for f in self.annotation_dir.glob(f"{img_id}/*.json")
+                for f in self.annotation_dir.glob(f"{image_id}/*.json")
             ]
         else:
             return [
@@ -314,47 +317,67 @@ class Dataset:
                 for f in self.annotation_dir.glob("*/*.json")
             ]
 
-    def get_labeled_imgs(self) -> list[Image]:
+    def get_predictions(self, image_id: int = None) -> list[Annotation]:
+        """Get "Prediction"s.
+
+        Args:
+            image_id (int, optional): image id. None for all "Prediction"s. Defaults to None.
+
+        Returns:
+            list[Annotation]: "Prediction" list
+        """
+        if image_id:
+            return [
+                Annotation.from_json(f)
+                for f in self.prediction_dir.glob(f"{image_id}/*.json")
+            ]
+        else:
+            return [
+                Annotation.from_json(f)
+                for f in self.prediction_dir.glob("*/*.json")
+            ]
+
+    def get_labeled_images(self) -> list[Image]:
         """Get labeled "Image"s
 
         Returns:
             list[Image]: "Image" list
         """
-        labeled_img_ids = map(
+        labeled_image_ids = map(
             lambda x: x.name,
             filter(
                 lambda x: os.path.isdir(x), Path(self.annotation_dir).glob("*")
             ),
         )
         return [
-            Image.from_json(self.image_dir / f"{img_id}.json")
-            for img_id in labeled_img_ids
+            Image.from_json(self.image_dir / f"{image_id}.json")
+            for image_id in labeled_image_ids
         ]
 
     # add
-    def add_imgs(self, images: list[Image]):
+    def add_images(self, images: list[Image]):
         """Add "Image"s to dataset.
 
         Args:
             images (list[Image]): list of "Image"s
         """
         for item in images:
-            item_id = item.img_id
+            item_id = item.image_id
             item_path = self.image_dir / f"{item_id}.json"
             io.save_json(item.to_dict(), item_path)
 
-    def add_cats(self, categories: list[Category]):
+    def add_categories(self, categories: list[Category]):
         """Add "Category"s to dataset.
 
         Args:
             categories (list[Category]): list of "Category"s
         """
         for item in categories:
-            item_id = item.cat_id
+            item_id = item.category_id
             item_path = self.category_dir / f"{item_id}.json"
             io.save_json(item.to_dict(), item_path)
 
-    def add_anns(self, annotations: list[Annotation]):
+    def add_annotations(self, annotations: list[Annotation]):
         """Add "Annotation"s to dataset.
 
         Args:
@@ -362,7 +385,23 @@ class Dataset:
         """
         for item in annotations:
             item_path = (
-                self.annotation_dir / f"{item.img_id}" / f"{item.ann_id}.json"
+                self.annotation_dir
+                / f"{item.image_id}"
+                / f"{item.annotation_id}.json"
+            )
+            io.save_json(item.to_dict(), item_path, create_directory=True)
+
+    def add_predictions(self, predictions: list[Annotation]):
+        """Add "Annotation"s to dataset.
+
+        Args:
+            annotations (list[Annotation]): list of "Annotation"s
+        """
+        for item in predictions:
+            item_path = (
+                self.prediction_dir
+                / f"{item.image_id}"
+                / f"{item.annotation_id}.json"
             )
             io.save_json(item.to_dict(), item_path, create_directory=True)
 
@@ -374,26 +413,26 @@ class Dataset:
             train_split_ratio (float): train num ratio
             seed (int, optional): random seed. Defaults to 0.
         """
-        imgs: list[Image] = self.get_labeled_imgs()
+        images: list[Image] = self.get_labeled_images()
 
-        num_imgs = len(imgs)
-        idxs = list(range(num_imgs))
+        num_images = len(images)
+        idxs = list(range(num_images))
 
         random.seed(seed)
         random.shuffle(idxs)
 
-        train_num = round(num_imgs * train_split_ratio)
+        train_num = round(num_images * train_split_ratio)
 
-        train_img_idxs = idxs[:train_num]
-        val_img_idxs = idxs[train_num:]
+        train_image_idxs = idxs[:train_num]
+        val_image_idxs = idxs[train_num:]
 
         io.save_json(
-            [imgs[idx].img_id for idx in train_img_idxs],
+            [images[idx].image_id for idx in train_image_idxs],
             self.set_dir / self.TRAIN_SET_NAME,
             create_directory=True,
         )
         io.save_json(
-            [imgs[idx].img_id for idx in val_img_idxs],
+            [images[idx].image_id for idx in val_image_idxs],
             self.set_dir / self.VAL_SET_NAME,
             create_directory=True,
         )
@@ -420,7 +459,9 @@ class Dataset:
         export_dir: Path = self.export_dir / export_format.name
         if export_dir.exists():
             io.remove_directory(export_dir)
-            warnings.warn(f"{export_dir} already exists. Removing exist export and override.")
+            warnings.warn(
+                f"{export_dir} already exists. Removing exist export and override."
+            )
         io.make_directory(export_dir)
 
         if export_format == Format.YOLO_DETECTION:
@@ -470,7 +511,9 @@ class Dataset:
                     W = image.width
                     H = image.height
 
-                    annotations: list[Annotation] = self.get_anns(image.img_id)
+                    annotations: list[Annotation] = self.get_annotations(
+                        image.image_id
+                    )
                     label_txts = []
                     for annotation in annotations:
                         x1, y1, w, h = annotation.bbox
@@ -478,7 +521,7 @@ class Dataset:
                         y1, h = y1 / H, h / H
                         cx, cy = x1 + w / 2, y1 + h / 2
 
-                        category_id = annotation.cat_id - 1
+                        category_id = annotation.category_id - 1
 
                         label_txts.append(f"{category_id} {cx} {cy} {w} {h}")
 
@@ -497,15 +540,15 @@ class Dataset:
                     "There is no set files. Please run ds.split_train_val() first"
                 )
 
-            train_img_ids: list = io.load_json(train_set_file)
-            val_img_ids: list = io.load_json(val_set_file)
+            train_image_ids: list = io.load_json(train_set_file)
+            val_image_ids: list = io.load_json(val_set_file)
 
             io.make_directory(export_dir / "train")
             io.make_directory(export_dir / "val")
-            if train_img_ids:
-                _export(self.get_imgs(train_img_ids), export_dir / "train")
-            if val_img_ids:
-                _export(self.get_imgs(val_img_ids), export_dir / "val")
+            if train_image_ids:
+                _export(self.get_images(train_image_ids), export_dir / "train")
+            if val_image_ids:
+                _export(self.get_images(val_image_ids), export_dir / "val")
 
             io.save_yaml(
                 {
@@ -513,8 +556,8 @@ class Dataset:
                     "train": "train",
                     "val": "val",
                     "names": {
-                        category.cat_id - 1: category.name
-                        for category in self.get_cats()
+                        category.category_id - 1: category.name
+                        for category in self.get_categories()
                     },
                 },
                 export_dir / "data.yaml",
@@ -552,12 +595,16 @@ class Dataset:
                 export_dir: Path,
             ):
                 img_dir = export_dir
-                cat_dict: dict = {cat.cat_id: cat.name for cat in categories}
+                cat_dict: dict = {
+                    cat.category_id: cat.name for cat in categories
+                }
 
                 for image in images:
                     image_path = self.raw_image_dir / f"{image.file_name}"
 
-                    annotations: list[Annotation] = self.get_anns(image.img_id)
+                    annotations: list[Annotation] = self.get_annotations(
+                        image.image_id
+                    )
                     # TODO: multi label supports.
                     # TODO: check if YOLO will support multi label.
                     if len(annotations) > 1:
@@ -565,10 +612,10 @@ class Dataset:
                             f"Multi label does not support yet. Skipping {image_path}."
                         )
                         continue
-                    cat_id = annotations[0].cat_id
+                    category_id = annotations[0].category_id
 
                     image_dst_path = (
-                        img_dir / cat_dict[cat_id] / f"{image.file_name}"
+                        img_dir / cat_dict[category_id] / f"{image.file_name}"
                     )
                     io.copy_file(
                         image_path, image_dst_path, create_directory=True
@@ -585,15 +632,23 @@ class Dataset:
                     "There is no set files. Please run ds.split_train_val() first"
                 )
 
-            train_img_ids: list = io.load_json(train_set_file)
-            val_img_ids: list = io.load_json(val_set_file)
+            train_image_ids: list = io.load_json(train_set_file)
+            val_image_ids: list = io.load_json(val_set_file)
 
             io.make_directory(export_dir / "train")
             io.make_directory(export_dir / "val")
-            if train_img_ids:
-                _export(self.get_imgs(train_img_ids), self.get_cats(), export_dir / "train")
-            if val_img_ids:
-                _export(self.get_imgs(val_img_ids), self.get_cats(), export_dir / "val")
+            if train_image_ids:
+                _export(
+                    self.get_images(train_image_ids),
+                    self.get_categories(),
+                    export_dir / "train",
+                )
+            if val_image_ids:
+                _export(
+                    self.get_images(val_image_ids),
+                    self.get_categories(),
+                    export_dir / "val",
+                )
 
             io.save_yaml(
                 {
@@ -601,8 +656,8 @@ class Dataset:
                     "train": "train",
                     "val": "val",
                     "names": {
-                        category.cat_id - 1: category.name
-                        for category in self.get_cats()
+                        category.category_id - 1: category.name
+                        for category in self.get_categories()
                     },
                 },
                 export_dir / "data.yaml",
