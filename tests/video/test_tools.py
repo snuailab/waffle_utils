@@ -32,8 +32,3 @@ def test_tools(tmpdir: Path):
     # Check that the video file was created correctly
     assert output_path.is_file()
     assert output_path.stat().st_size > 0
-
-
-# FIXME: It doesn't generate the temporary file automatically
-if __name__ == "__main__":
-    test_tools()
