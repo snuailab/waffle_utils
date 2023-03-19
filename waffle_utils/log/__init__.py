@@ -1,4 +1,5 @@
 from .time import datetime_now
-from .config import get_logger
+from .config import CustomLogger
 
-__all__ = ["datetime_now", "get_logger"]
+
+__all__ = ["datetime_now", "CustomLogger"]

@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 from typing import Union
 
@@ -6,11 +5,14 @@ from waffle_utils.file.io import make_directory
 from waffle_utils.file.search import get_image_files
 from waffle_utils.image import DEFAULT_IMAGE_EXTENSION, SUPPORTED_IMAGE_EXTENSION
 from waffle_utils.image.io import load_image, save_image
-from waffle_utils.log import logging
+from waffle_utils.log import CustomLogger
 from waffle_utils.video.io import create_video_capture, create_video_writer
 
-
-logger = logging.getLogger(__name__)
+# TODO: Rename the class to be used like `logging`` library
+logger = CustomLogger()
+# TODO: Refactor the logger
+# TODO: Add method `getLogger`
+# logger = logging.getLogger(__name__)
 DEFAULT_FRAME_RATE = 30
 
 
