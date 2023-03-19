@@ -3,7 +3,7 @@ import logging.handlers
 from pathlib import Path
 
 
-def get_logger():
+def get_logger() -> logging.Logger:
     # Create the log folder for the log file
     log_file_path = Path("logs/waffle.log")
     log_file_path.parent.mkdir(parents=True, exist_ok=True)

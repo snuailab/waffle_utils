@@ -8,11 +8,10 @@ from waffle_utils.dataset.format import Format
 from waffle_utils.file.io import unzip
 from waffle_utils.file.network import get_file_from_url
 from waffle_utils.image import DEFAULT_IMAGE_EXTENSION, SUPPORTED_IMAGE_EXTENSION
-from waffle_utils.log import config
+from waffle_utils.log import logging
 from waffle_utils.video import SUPPORTED_VIDEO_EXTENSION
 from waffle_utils.video.tools import DEFAULT_FRAME_RATE, create_video, extract_frames
 
-config.get_logger()
 logger = logging.getLogger(__name__)
 
 
