@@ -1,7 +1,6 @@
+import logging
 from pathlib import Path
 from typing import Union
-
-from natsort import natsorted
 
 from waffle_utils.file.io import make_directory
 from waffle_utils.file.search import get_image_files
@@ -11,6 +10,8 @@ from waffle_utils.image import (
 )
 from waffle_utils.image.io import load_image, save_image
 from waffle_utils.video.io import create_video_capture, create_video_writer
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_FRAME_RATE = 30
 
@@ -65,13 +66,13 @@ def extract_frames(
             save_image(output_path, image)
 
             if verbose:
-                print(f"{input_path} ({count}) -> {output_path}.")
+                logger.info(f"{input_path} ({count}) -> {output_path}.")
 
         count += 1
 
     # Release the video capture
     video_capture.release()
-    print(f"Output: {output_dir}/")
+    logger.info(f"Output: {output_dir}/")
 
 
 def create_video(
@@ -110,10 +111,10 @@ def create_video(
     # Iterate through frames and write to the video file
     for i, frame in enumerate(image_files):
         if verbose:
-            print(f"{frame} -> {output_path} ({i+1}/{len(image_files)})")
+            logger.info(f"{frame} -> {output_path} ({i+1}/{len(image_files)})")
         image = load_image(frame)
         out.write(image)
 
     # Release the video writer
     out.release()
-    print(f"Output: {output_path}")
+    logger.info(f"Output: {output_path}")

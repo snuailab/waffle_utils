@@ -1,4 +1,3 @@
-import tempfile
 from pathlib import Path
 
 from waffle_utils.file.io import copy_file
@@ -16,7 +15,7 @@ def test_tools(tmpdir: Path):
 
     image_extension = DEFAULT_IMAGE_EXTENSION
     video_extension = DEFAULT_VIDEO_EXTENSION
-    
+
     # Extract and save individual image frames from video
     extract_frames(
         input_path_copy,
@@ -27,15 +26,9 @@ def test_tools(tmpdir: Path):
     )
 
     # Create a video file from the extracted frames
-    output_path = Path(
-        tmpdir / f"test.{video_extension}"
-    )
+    output_path = Path(tmpdir / f"test.{video_extension}")
     create_video(tmpdir, output_path, frame_rate=10, verbose=True)
 
     # Check that the video file was created correctly
     assert output_path.is_file()
     assert output_path.stat().st_size > 0
-
-
-if __name__ == "__main__":
-    test_tools()
