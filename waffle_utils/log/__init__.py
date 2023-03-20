@@ -1,5 +1,4 @@
+from .template import initialize_logger
 from .time import datetime_now
-from .config import CustomLogger
 
-
-__all__ = ["datetime_now", "CustomLogger"]
+__all__ = ["datetime_now", "initialize_logger"]
