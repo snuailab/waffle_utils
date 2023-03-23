@@ -13,7 +13,7 @@ DEFAULT_ROOT_LEVEL = logging.WARNING
 DEFAULT_CONSOLE_LEVEL = logging.INFO
 DEFAULT_FILE_LEVEL = logging.DEBUG
 
-DEFAULT_TIMED_ROATETING_WHEN = "H"
+DEFAULT_TIMED_ROATETING_WHEN = "D"
 DEFAULT_TIMED_ROATETING_INTERVAL = 1
 DEFAULT_ENCODING = "utf8"
 
@@ -23,7 +23,7 @@ class LogLevel:
 
 
 def initialize_logger(
-    file_path: Union[str, Path] = "logs/waffle.log",
+    file_path: Union[str, Path],
     console_level: LogLevel = DEFAULT_CONSOLE_LEVEL,
     file_level: LogLevel = DEFAULT_FILE_LEVEL,
     root_level: LogLevel = DEFAULT_ROOT_LEVEL,
