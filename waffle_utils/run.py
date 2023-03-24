@@ -10,8 +10,10 @@ from waffle_utils.image import DEFAULT_IMAGE_EXTENSION, SUPPORTED_IMAGE_EXTENSIO
 from waffle_utils.video import SUPPORTED_VIDEO_EXTENSION
 from waffle_utils.video.tools import DEFAULT_FRAME_RATE, create_video, extract_frames
 
-logger = logging.getLogger(__name__)
+from waffle_utils.log import initialize_logger
 
+initialize_logger("logs/cli.log", root_level=logging.DEBUG, console_level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 app = typer.Typer()
 
@@ -49,6 +51,7 @@ def _unzip(
     create_directory: bool = True,
 ):
     unzip(file_path, output_dir, create_directory=create_directory)
+    logger.debug(f"Extracting {file_path} under {output_dir} has been completed.")
 
 
 @app.command(name="from_coco")
@@ -68,8 +71,8 @@ def _from_coco(
     )
 
 
-@app.command(name="split_train_val")
-def _split_train_val(
+@app.command(name="split")
+def _split(
     name: str = typer.Option(..., help=name_docs),
     root_dir: str = typer.Option(None, help=root_dir_docs),
     train_split_ratio: float = typer.Option(..., help=train_split_ratio_docs),
@@ -77,8 +80,8 @@ def _split_train_val(
 ):
     """split train validation"""
 
-    ds = Dataset.from_directory(name, root_dir=root_dir)
-    ds.split_train_val(train_split_ratio, seed=random_seed)
+    ds = Dataset.load(name, root_dir=root_dir)
+    ds.split(train_split_ratio, seed=random_seed)
 
 
 @app.command(name="export")
@@ -89,7 +92,7 @@ def _export(
 ):
     """Export Dataset"""
 
-    ds = Dataset.from_directory(name, root_dir)
+    ds = Dataset.load(name, root_dir)
 
     export_format = export_format.upper()
     if not hasattr(Format, export_format):
