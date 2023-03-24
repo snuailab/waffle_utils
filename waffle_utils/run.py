@@ -54,9 +54,9 @@ def _unzip(
 @app.command(name="from_coco")
 def _from_coco(
     name: str = typer.Option(..., help=name_docs),
-    root_dir: str = typer.Option(None, help=root_dir_docs),
     coco_file: str = typer.Option(..., help=coco_file_docs),
     coco_root_dir: str = typer.Option(..., help=coco_root_dir_docs),
+    root_dir: str = typer.Option(None, help=root_dir_docs),
 ):
     """Import Dataset from COCO Format"""
 
