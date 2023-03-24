@@ -9,7 +9,7 @@ LOG_FORMAT = "%(asctime)s [%(levelname)s] %(name)s:%(lineno)d: %(message)s"
 MAX_BYTES = 1024 * 50  # for RotatingFileHandler
 BACKUP_COUNT = 20
 
-DEFAULT_ROOT_LEVEL = logging.WARNING
+DEFAULT_ROOT_LEVEL = logging.DEBUG
 DEFAULT_CONSOLE_LEVEL = logging.INFO
 DEFAULT_FILE_LEVEL = logging.DEBUG
 
