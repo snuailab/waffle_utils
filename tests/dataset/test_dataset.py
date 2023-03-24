@@ -168,20 +168,25 @@ def dataset(tmpdir: Path):
     return ds
 
 
-def test_import_coco(dataset: Dataset):
+def test_dataset_export_yolo(dataset: Dataset):
     dataset.split(0.8)
 
     exported_dataset_dir = dataset.export(Format.YOLO_DETECTION)
-    exported_dataset_dir = dataset.export("yolo_detection")
     assert Path(exported_dataset_dir).exists()
 
     exported_dataset_dir = dataset.export(Format.YOLO_CLASSIFICATION)
-    exported_dataset_dir = dataset.export("YOLO_CLASSIFICATION")
     assert Path(exported_dataset_dir).exists()
 
     dataset.split(0)
     exported_dataset_dir = dataset.export(Format.YOLO_DETECTION)
     assert len(list((Path(exported_dataset_dir) / "train").rglob("*"))) == 0
+
+
+def test_dataset_export_coco(dataset: Dataset):
+    dataset.split(0.8)
+
+    exported_dataset_dir = dataset.export(Format.COCO_DETECTION)
+    assert Path(exported_dataset_dir).exists()
 
 
 def test_predictions(dataset: Dataset):

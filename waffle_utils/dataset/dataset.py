@@ -1,6 +1,6 @@
+import logging
 import os
 import random
-import logging
 import warnings
 from functools import cached_property
 from pathlib import Path
@@ -13,6 +13,7 @@ from .fields import Annotation, Category, Image
 from .format import Format
 
 logger = logging.getLogger(__name__)
+
 
 class Dataset:
     DEFAULT_DATASET_ROOT_DIR = Path("./datasets")
@@ -90,19 +91,19 @@ class Dataset:
     @cached_property
     def set_dir(self) -> Path:
         return self.dataset_dir / Dataset.SET_DIR
-    
+
     @cached_property
     def train_set_file(self) -> Path:
         return self.set_dir / Dataset.TRAIN_SET_FILE_NAME
-    
+
     @cached_property
     def val_set_file(self) -> Path:
         return self.set_dir / Dataset.VAL_SET_FILE_NAME
-    
+
     @cached_property
     def test_set_file(self) -> Path:
         return self.set_dir / Dataset.TEST_SET_FILE_NAME
-    
+
     @cached_property
     def unlabeled_set_file(self) -> Path:
         return self.set_dir / Dataset.UNLABELED_SET_FILE_NAME
@@ -277,7 +278,9 @@ class Dataset:
         )
 
     # get
-    def get_images(self, image_ids: list[int] = None, labeled: bool = True) -> list[Image]:
+    def get_images(
+        self, image_ids: list[int] = None, labeled: bool = True
+    ) -> list[Image]:
         """Get "Image"s.
 
         Args:
@@ -287,7 +290,11 @@ class Dataset:
         Returns:
             list[Image]: "Image" list
         """
-        image_files = list(map(lambda x: self.image_dir / (str(x) + ".json"), image_ids)) if image_ids else list(self.image_dir.glob("*.json"))
+        image_files = (
+            list(map(lambda x: self.image_dir / (str(x) + ".json"), image_ids))
+            if image_ids
+            else list(self.image_dir.glob("*.json"))
+        )
         labeled_images = []
         unlabeled_images = []
         for image_file in image_files:
@@ -417,11 +424,11 @@ class Dataset:
 
     # functions
     def split(
-        self, 
-        train_ratio: float, 
-        val_ratio: float = 0.,
-        test_ratio: float = 0.,
-        seed: int = 0
+        self,
+        train_ratio: float,
+        val_ratio: float = 0.0,
+        test_ratio: float = 0.0,
+        seed: int = 0,
     ):
         """Split Dataset to train, validation, test, (unlabeled) sets.
 
@@ -432,9 +439,9 @@ class Dataset:
             seed (int, optional): random seed. Defaults to 0.
         """
 
-        if val_ratio == 0.:
+        if val_ratio == 0.0:
             val_ratio = 1 - train_ratio
-        
+
         total_ratio = train_ratio + val_ratio + test_ratio
         train_ratio = train_ratio / total_ratio
         val_ratio = val_ratio / total_ratio
@@ -453,8 +460,10 @@ class Dataset:
         logger.info(f"train: {train_num}, val: {val_num}, test: {test_num}")
 
         train_images = images[:train_num]
-        val_images = images[train_num:train_num+val_num]
-        test_images = images[train_num+val_num:] if test_num > 0 else val_images
+        val_images = images[train_num : train_num + val_num]
+        test_images = (
+            images[train_num + val_num :] if test_num > 0 else val_images
+        )
 
         io.save_json(
             list(map(lambda x: x.image_id, train_images)),
@@ -471,7 +480,7 @@ class Dataset:
             self.test_set_file,
             create_directory=True,
         )
-        
+
         unlabeled_images: list[Image] = self.get_images(labeled=False)
 
         io.save_json(
@@ -541,7 +550,7 @@ class Dataset:
                             3.png
                         labels/
                             3.txt
-                    
+
             - dataset.yaml
                 path: [dataset_dir]/exports/{export_format.name}
                 train: train
@@ -553,22 +562,28 @@ class Dataset:
             """
 
             def _export(images: list[Image], export_dir: Path):
-                img_dir = export_dir / "images"
+                image_dir = export_dir / "images"
                 label_dir = export_dir / "labels"
 
-                io.make_directory(img_dir)
+                io.make_directory(image_dir)
                 io.make_directory(label_dir)
 
                 for image in images:
                     image_path = self.raw_image_dir / image.file_name
-                    image_dst_path = img_dir / image.file_name
-                    label_dst_path = (label_dir / image.file_name).with_suffix(".txt")
-                    io.copy_file(image_path, image_dst_path, create_directory=True)
+                    image_dst_path = image_dir / image.file_name
+                    label_dst_path = (label_dir / image.file_name).with_suffix(
+                        ".txt"
+                    )
+                    io.copy_file(
+                        image_path, image_dst_path, create_directory=True
+                    )
 
                     W = image.width
                     H = image.height
 
-                    annotations: list[Annotation] = self.get_annotations(image.image_id)
+                    annotations: list[Annotation] = self.get_annotations(
+                        image.image_id
+                    )
                     label_txts = []
                     for annotation in annotations:
                         x1, y1, w, h = annotation.bbox
@@ -592,7 +607,7 @@ class Dataset:
                 _export(self.get_images(val_image_ids), export_dir / "val")
             if test_image_ids:
                 io.make_directory(export_dir / "test")
-                _export(self.get_images(val_image_ids), export_dir / "test")
+                _export(self.get_images(test_image_ids), export_dir / "test")
 
             io.save_yaml(
                 {
@@ -645,7 +660,7 @@ class Dataset:
                 categories: list[Category],
                 export_dir: Path,
             ):
-                img_dir = export_dir
+                image_dir = export_dir
                 cat_dict: dict = {
                     cat.category_id: cat.name for cat in categories
                 }
@@ -663,8 +678,12 @@ class Dataset:
                         continue
                     category_id = annotations[0].category_id
 
-                    image_dst_path = img_dir / cat_dict[category_id] / image.file_name
-                    io.copy_file(image_path, image_dst_path, create_directory=True)
+                    image_dst_path = (
+                        image_dir / cat_dict[category_id] / image.file_name
+                    )
+                    io.copy_file(
+                        image_path, image_dst_path, create_directory=True
+                    )
 
             if train_image_ids:
                 io.make_directory(export_dir / "train")
@@ -706,6 +725,62 @@ class Dataset:
 
         elif export_format == Format.YOLO_SEGMENTATION:
             raise NotImplementedError
-            
+
         elif export_format == Format.COCO_DETECTION:
-            raise NotImplementedError
+            """COCO DETECTION FORMAT
+            - directory format
+                coco_dataset/
+                    images/
+                        1.png
+                        ...
+                    train.json
+                    val.json
+                    test.json
+            """
+
+            def _export(images: list[Image], set_name: str, export_dir: Path):
+                image_dir = export_dir / "images"
+                label_path = export_dir / f"{set_name}.json"
+
+                io.make_directory(image_dir)
+
+                coco = {"categories": [], "images": [], "annotations": []}
+
+                for category in self.get_categories():
+                    d = category.to_dict()
+                    category_id = d.pop("category_id")
+                    coco["categories"].append({"id": category_id, **d})
+
+                for image in images:
+                    image_path = self.raw_image_dir / image.file_name
+                    image_dst_path = image_dir / image.file_name
+                    io.copy_file(
+                        image_path, image_dst_path, create_directory=True
+                    )
+
+                    d = image.to_dict()
+                    image_id = d.pop("image_id")
+                    coco["images"].append({"id": image_id, **d})
+
+                    annotations = self.get_annotations(image_id)
+                    for annotation in annotations:
+                        d = annotation.to_dict()
+                        annotation_id = d.pop("annotation_id")
+                        coco["annotations"].append({"id": annotation_id, **d})
+
+                io.save_json(coco, label_path, create_directory=True)
+
+            if train_image_ids:
+                _export(self.get_images(train_image_ids), "train", export_dir)
+            if val_image_ids:
+                _export(self.get_images(val_image_ids), "val", export_dir)
+            if test_image_ids:
+                _export(self.get_images(test_image_ids), "test", export_dir)
+            if unlabeled_image_ids:
+                _export(
+                    self.get_images(unlabeled_image_ids, labeled=False),
+                    "unlabeled",
+                    export_dir,
+                )
+
+            return str(export_dir)
