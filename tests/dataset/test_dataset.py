@@ -153,41 +153,43 @@ def dataset(tmpdir: Path):
 
     dummy_zip_file = tmpdir / "mnist.zip"
     dummy_extract_dir = tmpdir / "extract"
-    dummy_coco_root_dir = tmpdir / "extract/raw"
-    dummy_coco_file = tmpdir / "extract/exports/coco.json"
 
     network.get_file_from_url(url, dummy_zip_file, create_directory=True)
     io.unzip(dummy_zip_file, dummy_extract_dir, create_directory=True)
 
+    print(list(Path(dummy_extract_dir).glob("*")))
+
     ds = Dataset.from_coco(
         "mnist",
-        dummy_coco_file,
-        Path(dummy_coco_root_dir),
-        root_dir=tmpdir / "datasets",
+        coco_file=dummy_extract_dir / "exports/coco.json",
+        coco_root_dir=Path(dummy_extract_dir / "raw"),
+        root_dir=tmpdir,
     )
-    ds.split_train_val(0.8)
     return ds
 
 
-def test_import_coco(dataset: Dataset):
+def test_dataset_export_yolo(dataset: Dataset):
+    dataset.split(0.8)
 
     exported_dataset_dir = dataset.export(Format.YOLO_DETECTION)
-    exported_dataset_dir = dataset.export("yolo_detection")
-    exported_dataset_dir = dataset.export("YOLO_DETECTION")
     assert Path(exported_dataset_dir).exists()
 
     exported_dataset_dir = dataset.export(Format.YOLO_CLASSIFICATION)
-    exported_dataset_dir = dataset.export("yolo_classification")
-    exported_dataset_dir = dataset.export("YOLO_CLASSIFICATION")
     assert Path(exported_dataset_dir).exists()
 
-    dataset.split_train_val(train_split_ratio=0)
+    dataset.split(0)
     exported_dataset_dir = dataset.export(Format.YOLO_DETECTION)
     assert len(list((Path(exported_dataset_dir) / "train").rglob("*"))) == 0
 
 
-def test_predictions(dataset: Dataset):
+def test_dataset_export_coco(dataset: Dataset):
+    dataset.split(0.8)
 
+    exported_dataset_dir = dataset.export(Format.COCO_DETECTION)
+    assert Path(exported_dataset_dir).exists()
+
+
+def test_predictions(dataset: Dataset):
     dataset.add_predictions(
         [
             A.object_detection(
