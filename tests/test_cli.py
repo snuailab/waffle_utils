@@ -3,9 +3,9 @@ from pathlib import Path
 
 import pytest
 
+from waffle_utils.file.io import remove_directory
 from waffle_utils.image import DEFAULT_IMAGE_EXTENSION
 from waffle_utils.video import DEFAULT_VIDEO_EXTENSION
-from waffle_utils.file.io import remove_directory
 
 
 def run(cmd):
@@ -75,9 +75,9 @@ def test_from_coco(data_root_dir, dataset_name, coco_file, coco_root_dir):
     )
 
 
-def test_split_train_val(data_root_dir, dataset_name):
+def test_split(data_root_dir, dataset_name):
     run(
-        f"python -m waffle_utils.run split_train_val --name {dataset_name} --root-dir {data_root_dir} --train-split-ratio 0.8"
+        f"python -m waffle_utils.run split --name {dataset_name} --root-dir {data_root_dir} --train-split-ratio 0.8"
     )
 
 
@@ -86,7 +86,7 @@ def test_export(data_root_dir, dataset_name):
         f"python -m waffle_utils.run export --name {dataset_name} --root-dir {data_root_dir} --export-format yolo_detection"
     )
     run(
-        f"python -m waffle_utils.run export --name {dataset_name} --root-dir {data_root_dir} --export-format YOLO_DETECTION"
+        f"python -m waffle_utils.run export --name {dataset_name} --root-dir {data_root_dir} --export-format coco_detection"
     )
 
 
