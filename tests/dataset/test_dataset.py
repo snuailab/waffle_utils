@@ -130,3 +130,10 @@ def test_import_coco():
         ds.split_train_val(train_split_ratio=0)
         exported_dataset_dir = ds.export(Format.YOLO_DETECTION)
         assert len(list((Path(exported_dataset_dir) / "train").rglob("*"))) == 0
+
+
+def test_import_yolo():
+    # TODO: Implement
+    # TODO: mnist.zip -> yolo.zip
+    # TODO: yolo format unified bbox and segmentation. Thus, we need segmentation only
+    pass
