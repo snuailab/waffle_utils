@@ -216,6 +216,44 @@ class Dataset:
         return ds
 
     @classmethod
+    def from_yolo(
+        cls,
+        name: str,
+        yolo_file: str,
+        yolo_root_dir: str,
+        root_dir: str = None,
+    ) -> "Dataset":
+        """Import Dataset from yolo format.
+
+        Args:
+            name (str): Dataset name.
+            yolo_file (str): Yolo txt file path.
+            yolo_root_dir (str): Yolo image root directory.
+            root_dir (str, optional): Dataset root directory. Defaults to None.
+
+        Raises:
+            FileExistsError: if new dataset name already exist.
+
+        Returns:
+            Dataset: Dataset Class
+        """
+        ds = cls(name, root_dir)
+        if ds.initialized():
+            raise FileExistsError(f"{ds.dataset_dir} already exists. try another name.")
+        ds.initialize()
+
+        # parse yolo annotation file
+        yolo = io.load_txt(yolo_file)
+        ds.add_imgs([Image.from_yolo_line(line) for line in yolo])
+        ds.add_anns([Annotation.from_yolo_line(line) for line in yolo])
+        ds.add_cats([Category.from_yolo_line(line) for line in yolo])
+
+        # copy raw images
+        io.copy_files_to_directory(yolo_root_dir, ds.raw_image_dir)
+
+        return ds
+
+    @classmethod
     def from_nas(cls) -> "Dataset":
         # download to root_dir from nas
         # return cls(root_dir=root_dir)
