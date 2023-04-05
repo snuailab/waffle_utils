@@ -97,19 +97,19 @@ def test_import_coco():
         dummy_tmp_dir = Path(dummy_tmp_dir)
         dummy_zip_file = dummy_tmp_dir / "mnist.zip"
         dummy_data_root_dir = dummy_tmp_dir / "tmp/dataset"
-        dummy_dataset_name = "mnist"
+        dummy_dataset_name = "mnist_coco"
 
         dummy_extract_dir = dummy_tmp_dir / "tmp/extract"
-        dummy_coco_root_dir = dummy_tmp_dir / "tmp/extract/raw"
-        dummy_coco_file = dummy_tmp_dir / "tmp/extract/exports/coco.json"
+        dummy_images_dir = dummy_tmp_dir / "tmp/extract/raw"
+        dummy_coco_json_file = dummy_tmp_dir / "tmp/extract/exports/coco.json"
 
         network.get_file_from_url(url, dummy_zip_file, create_directory=True)
         io.unzip(dummy_zip_file, dummy_extract_dir, create_directory=True)
 
         ds = Dataset.from_coco(
-            dummy_dataset_name,
-            dummy_coco_file,
-            dummy_coco_root_dir,
+            name=dummy_dataset_name,
+            coco_file=dummy_coco_json_file,
+            images_dir=dummy_images_dir,
             root_dir=dummy_data_root_dir,
         )
 
@@ -129,11 +129,50 @@ def test_import_coco():
 
         ds.split_train_val(train_split_ratio=0)
         exported_dataset_dir = ds.export(Format.YOLO_DETECTION)
-        assert len(list((Path(exported_dataset_dir) / "train").rglob("*"))) == 0
+        assert (
+            len(list((Path(exported_dataset_dir) / "train").rglob("*"))) == 0
+        )
 
 
-def test_import_yolo():
-    # TODO: Implement
-    # TODO: mnist.zip -> yolo.zip
-    # TODO: yolo format unified bbox and segmentation. Thus, we need segmentation only
-    pass
+def test_import_yolo(tmpdir: Path):
+    # TODO: need to import yolo format dataset
+
+    # url = "https://github.com/snuailab/waffle_utils/raw/main/mnist_yolo.zip"  #
+    url = "https://github.com/oneQuery/waffle_utils/blob/46-need-to-import-yolo-format-dataset/mnist_yolo.zip"  # HACK: for test
+
+    tmpdir = Path(tmpdir)
+    dummy_zip_file = tmpdir / "mnist_yolo.zip"
+    dummy_data_root_dir = tmpdir / "tmp/dataset"
+    dummy_dataset_name = "mnist_yolo"
+
+    dummy_extract_dir = tmpdir / "tmp/extracted"
+    dummy_images_dir = tmpdir / "tmp/extracted/images"
+    dummy_yolo_txt_dir = tmpdir / "tmp/extracted/labels"
+
+    network.get_file_from_url(url, dummy_zip_file, create_directory=True)
+    io.unzip(dummy_zip_file, dummy_extract_dir, create_directory=True)
+
+    ds = Dataset.from_yolo(
+        name=dummy_dataset_name,
+        yolo_txt_dir=dummy_yolo_txt_dir,
+        images_dir=dummy_images_dir,
+        root_dir=dummy_data_root_dir,
+    )
+
+    ds = Dataset.from_directory(dummy_dataset_name, dummy_data_root_dir)
+
+    ds.split_train_val(train_split_ratio=0.8)
+
+    exported_dataset_dir = ds.export(Format.YOLO_DETECTION)
+    exported_dataset_dir = ds.export("yolo_detection")
+    exported_dataset_dir = ds.export("YOLO_DETECTION")
+    assert Path(exported_dataset_dir).exists()
+
+    exported_dataset_dir = ds.export(Format.YOLO_CLASSIFICATION)
+    exported_dataset_dir = ds.export("yolo_classification")
+    exported_dataset_dir = ds.export("YOLO_CLASSIFICATION")
+    assert Path(exported_dataset_dir).exists()
+
+    ds.split_train_val(train_split_ratio=0)
+    exported_dataset_dir = ds.export(Format.YOLO_DETECTION)
+    assert len(list((Path(exported_dataset_dir) / "train").rglob("*"))) == 0
