@@ -22,4 +22,8 @@ def get_file_from_url(
     if create_directory:
         io.make_directory(out.parent)
 
+    # If the file already exists, do not download it again
+    if out.exists():
+        return
+
     wget.download(url, str(out))
