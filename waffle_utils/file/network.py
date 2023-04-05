@@ -1,11 +1,14 @@
 from pathlib import Path
+from typing import Union
 
 import wget
 
 from . import io
 
 
-def get_file_from_url(url: str, out: str, create_directory: bool = False):
+def get_file_from_url(
+    url: str, out: Union[str, Path], create_directory: bool = False
+):
     """Download file from url using wget
 
     Args:
