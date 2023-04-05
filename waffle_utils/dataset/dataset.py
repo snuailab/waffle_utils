@@ -28,7 +28,7 @@ class Dataset:
     def __init__(
         self,
         name: str,
-        root_dir: str = None,
+        root_dir: Optional[Union[str, Path]] = None,
     ):
         self.name = name
         self.root_dir = (
@@ -148,7 +148,9 @@ class Dataset:
         )
 
     @classmethod
-    def from_directory(cls, name: str, root_dir: str = None) -> "Dataset":
+    def from_directory(
+        cls, name: str, root_dir: Optional[Union[str, Path]] = None
+    ) -> "Dataset":
         """Load Dataset from directory.
 
         Args:

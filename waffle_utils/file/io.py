@@ -189,7 +189,11 @@ def remove_directory(src: Union[str, Path]):
     shutil.rmtree(str(src))
 
 
-def unzip(src: str, dst: str, create_directory: bool = False):
+def unzip(
+    src: Union[str, Path],
+    dst: Union[str, Path],
+    create_directory: bool = False,
+):
 
     if create_directory:
         make_directory(dst)
