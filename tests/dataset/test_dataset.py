@@ -176,3 +176,11 @@ def test_import_yolo(tmpdir: Path):
     ds.split_train_val(train_split_ratio=0)
     exported_dataset_dir = ds.export(Format.YOLO_DETECTION)
     assert len(list((Path(exported_dataset_dir) / "train").rglob("*"))) == 0
+
+
+# HACK: for test
+if __name__ == "__main__":
+    # test_images()
+    # test_categories()
+    # test_import_coco()
+    test_import_yolo(tmpdir=Path(".tmp"))
