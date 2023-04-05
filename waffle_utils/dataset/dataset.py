@@ -3,7 +3,7 @@ import random
 import warnings
 from functools import cached_property
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
 from waffle_utils.file import io
 from waffle_utils.utils import type_validator
@@ -173,7 +173,7 @@ class Dataset:
         cls,
         name: str,
         coco_file: str,
-        coco_root_dir: str,
+        images_dir: str,
         root_dir: str = None,
     ) -> "Dataset":
         """Import Dataset from coco format.
@@ -211,7 +211,7 @@ class Dataset:
         )
 
         # copy raw images
-        io.copy_files_to_directory(coco_root_dir, ds.raw_image_dir)
+        io.copy_files_to_directory(images_dir, ds.raw_image_dir)
 
         return ds
 
@@ -219,9 +219,9 @@ class Dataset:
     def from_yolo(
         cls,
         name: str,
-        yolo_file: str,
-        yolo_root_dir: str,
-        root_dir: str = None,
+        yolo_txt_dir: Union[str, Path],
+        images_dir: Union[str, Path],
+        root_dir: Optional[Union[str, Path]] = None,
     ) -> "Dataset":
         """Import Dataset from yolo format.
 
@@ -239,17 +239,19 @@ class Dataset:
         """
         ds = cls(name, root_dir)
         if ds.initialized():
-            raise FileExistsError(f"{ds.dataset_dir} already exists. try another name.")
+            raise FileExistsError(
+                f"{ds.dataset_dir} already exists. try another name."
+            )
         ds.initialize()
 
         # parse yolo annotation file
-        yolo = io.load_txt(yolo_file)
+        yolo = io.load_txt(yolo_txt_dir)
         ds.add_imgs([Image.from_yolo_line(line) for line in yolo])
         ds.add_anns([Annotation.from_yolo_line(line) for line in yolo])
         ds.add_cats([Category.from_yolo_line(line) for line in yolo])
 
         # copy raw images
-        io.copy_files_to_directory(yolo_root_dir, ds.raw_image_dir)
+        io.copy_files_to_directory(images_dir, ds.raw_image_dir)
 
         return ds
 
@@ -458,7 +460,9 @@ class Dataset:
         export_dir: Path = self.export_dir / export_format.name
         if export_dir.exists():
             io.remove_directory(export_dir)
-            warnings.warn(f"{export_dir} already exists. Removing exist export and override.")
+            warnings.warn(
+                f"{export_dir} already exists. Removing exist export and override."
+            )
         io.make_directory(export_dir)
 
         if export_format == Format.YOLO_DETECTION:
@@ -629,9 +633,17 @@ class Dataset:
             io.make_directory(export_dir / "train")
             io.make_directory(export_dir / "val")
             if train_img_ids:
-                _export(self.get_imgs(train_img_ids), self.get_cats(), export_dir / "train")
+                _export(
+                    self.get_imgs(train_img_ids),
+                    self.get_cats(),
+                    export_dir / "train",
+                )
             if val_img_ids:
-                _export(self.get_imgs(val_img_ids), self.get_cats(), export_dir / "val")
+                _export(
+                    self.get_imgs(val_img_ids),
+                    self.get_cats(),
+                    export_dir / "val",
+                )
 
             io.save_yaml(
                 {
