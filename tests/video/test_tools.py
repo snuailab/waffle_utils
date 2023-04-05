@@ -1,4 +1,3 @@
-import tempfile
 from pathlib import Path
 
 from waffle_utils.file.io import copy_file
