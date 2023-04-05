@@ -57,16 +57,16 @@ def _unzip(
 @app.command(name="from_coco")
 def _from_coco(
     name: str = typer.Option(..., help=name_docs),
-    root_dir: str = typer.Option(None, help=root_dir_docs),
     coco_file: str = typer.Option(..., help=coco_file_docs),
     coco_root_dir: str = typer.Option(..., help=coco_root_dir_docs),
+    root_dir: str = typer.Option(None, help=root_dir_docs),
 ):
     """Import Dataset from COCO Format"""
 
     Dataset.from_coco(
         name,
         coco_file=coco_file,
-        coco_root_dir=coco_root_dir,
+        images_dir=coco_root_dir,
         root_dir=root_dir,
     )
 
@@ -109,7 +109,9 @@ input_frames_dir_docs = "Directory to input frame image files"
 output_frames_dir_docs = "Directory to output frame image files"
 output_video_path_docs = f"Path for output video file. Example: path/to/video.mp4. Supported extensions: {SUPPORTED_VIDEO_EXTENSION}"
 frame_rate_docs = "Frame rate"
-output_image_extension_docs = f"Output image extension. {SUPPORTED_IMAGE_EXTENSION}"
+output_image_extension_docs = (
+    f"Output image extension. {SUPPORTED_IMAGE_EXTENSION}"
+)
 verbose_docs = "Verbose"
 
 
@@ -125,7 +127,9 @@ def _extract_frames(
 ):
     """Extract Frames from a Video File"""
 
-    extract_frames(input_path, output_dir, frame_rate, output_image_extension, verbose)
+    extract_frames(
+        input_path, output_dir, frame_rate, output_image_extension, verbose
+    )
 
 
 @app.command(name="create_video")
