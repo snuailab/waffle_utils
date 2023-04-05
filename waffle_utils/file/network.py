@@ -24,6 +24,7 @@ def get_file_from_url(
 
     # If the file already exists, do not download it again
     if out.exists():
+        print(f"File {out} already exists. Skipping download.")
         return
 
     wget.download(url, str(out))

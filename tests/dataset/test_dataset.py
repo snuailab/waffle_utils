@@ -162,7 +162,7 @@ def dataset(tmpdir: Path):
     ds = Dataset.from_coco(
         "mnist",
         coco_file=dummy_extract_dir / "exports/coco.json",
-        coco_root_dir=Path(dummy_extract_dir / "raw"),
+        images_dir=Path(dummy_extract_dir / "raw"),
         root_dir=tmpdir,
     )
     return ds
@@ -203,54 +203,3 @@ def test_predictions(dataset: Dataset):
         ]
     )
     assert (dataset.prediction_dir / "1" / "1.json").exists()
-
-
-# TODO: import yolo?
-# def test_import_yolo(tmpdir: Path):
-#     # url = "https://github.com/snuailab/waffle_utils/raw/main/mnist_yolo.zip"
-#     url = "https://github.com/oneQuery/waffle_utils/blob/46-need-to-import-yolo-format-dataset/mnist_yolo.zip"  # HACK: for test
-
-#     tmpdir = Path(tmpdir)
-#     dummy_zip_file = tmpdir / "mnist_yolo.zip"
-#     dummy_data_root_dir = tmpdir / "tmp/dataset"
-#     dummy_dataset_name = "mnist_yolo"
-
-#     dummy_extract_dir = tmpdir / "tmp/extracted"
-#     dummy_images_dir = tmpdir / "tmp/extracted/images"
-#     dummy_yolo_txt_dir = tmpdir / "tmp/extracted/labels"
-
-#     network.get_file_from_url(url, dummy_zip_file, create_directory=True)
-#     io.unzip(dummy_zip_file, dummy_extract_dir, create_directory=True)
-
-#     ds = Dataset.from_yolo(
-#         name=dummy_dataset_name,
-#         yolo_txt_dir=dummy_yolo_txt_dir,
-#         images_dir=dummy_images_dir,
-#         root_dir=dummy_data_root_dir,
-#     )
-
-#     ds = Dataset.from_directory(dummy_dataset_name, dummy_data_root_dir)
-
-#     ds.split_train_val(train_split_ratio=0.8)
-
-#     exported_dataset_dir = ds.export(Format.YOLO_DETECTION)
-#     exported_dataset_dir = ds.export("yolo_detection")
-#     exported_dataset_dir = ds.export("YOLO_DETECTION")
-#     assert Path(exported_dataset_dir).exists()
-
-#     exported_dataset_dir = ds.export(Format.YOLO_CLASSIFICATION)
-#     exported_dataset_dir = ds.export("yolo_classification")
-#     exported_dataset_dir = ds.export("YOLO_CLASSIFICATION")
-#     assert Path(exported_dataset_dir).exists()
-
-#     ds.split_train_val(train_split_ratio=0)
-#     exported_dataset_dir = ds.export(Format.YOLO_DETECTION)
-#     assert len(list((Path(exported_dataset_dir) / "train").rglob("*"))) == 0
-
-
-# HACK: for test
-# if __name__ == "__main__":
-#     # test_images()
-#     # test_categories()
-#     # test_import_coco()
-#     test_import_yolo(tmpdir=Path(".tmp"))

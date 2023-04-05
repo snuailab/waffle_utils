@@ -197,9 +197,9 @@ class Dataset:
     def from_coco(
         cls,
         name: str,
-        coco_file: str,
-        images_dir: str,
-        root_dir: str = None,
+        coco_file: Union[str, Path],
+        images_dir: Union[str, Path],
+        root_dir: Optional[Union[str, Path]] = None,
     ) -> "Dataset":
         """Import Dataset from coco format.
 
