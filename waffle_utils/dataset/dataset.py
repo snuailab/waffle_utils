@@ -5,6 +5,8 @@ from functools import cached_property
 from pathlib import Path
 from typing import Optional, Union
 
+import numpy as np
+
 from waffle_utils.file import io
 from waffle_utils.utils import type_validator
 
@@ -306,7 +308,9 @@ class Dataset:
             # TODO: add annotation for bbox and segmentation
             yolo_txt_lines = yolo_txt.strip().splitlines()
             for yolo_txt_line in yolo_txt_lines:
-                vertices = list(map(float, yolo_txt_line.split()[1:]))
+                # Parse the bounding box coordinates --------------------------------
+                class_id, *vertices = map(float, yolo_txt.split())
+
                 x_coords = vertices[0::2]
                 y_coords = vertices[1::2]
 
@@ -323,7 +327,43 @@ class Dataset:
                 y_center = ymin + height / 2
 
                 # Format the bounding box annotation in YOLO txt format
-                bbox_yolo_txt = f"0 {x_center} {y_center} {width} {height}"
+                bbox = f"0 {x_center} {y_center} {width} {height}"
+
+                # Parse the segmentation coordinates -------------------------------
+                # reshape the boundary points into a Nx2 array
+                boundary = np.array(vertices).reshape(-1, 2)
+
+                # convert the boundary to COCO segmentation format
+                x, y = boundary.T
+                mask = np.zeros((300, 300), dtype=np.uint8)
+                mask[
+                    np.round(y * 299).astype(int),
+                    np.round(x * 299).astype(int),
+                ] = 1
+                counts = []
+                for i, row in enumerate(mask):
+                    if i == 0 or not np.array_equal(row, mask[i - 1]):
+                        counts.append(1)
+                        counts.extend(rle_encode(row))
+                    else:
+                        counts[-1] += 1
+
+                # construct the COCO segmentation annotation
+                segmentation = {"size": [300, 300], "counts": counts}
+
+                # helper function to RLE-encode a binary mask
+                def rle_encode(mask):
+                    counts = []
+                    for i, j in zip(np.where(mask)[0], np.where(mask)[1]):
+                        if not counts:
+                            counts.extend([i * 300 + j + 1, 0])
+                        elif counts[-2] == i * 300 + j:
+                            counts[-1] += 1
+                        else:
+                            counts.extend([i * 300 + j + 1, 0])
+                    if counts and counts[-1] == 0:
+                        counts.pop()
+                    return counts
 
                 # add annotation
                 annotation = Annotation.from_dict(
@@ -331,8 +371,8 @@ class Dataset:
                         "annotation_id": 0,
                         "image_id": image_id,
                         "category_id": 0,
-                        "bbox": bbox_yolo_txt,
-                        "segmentation": [],
+                        "bbox": bbox,
+                        "segmentation": segmentation,
                     }
                 )
                 ds.add_annotations([annotation])
