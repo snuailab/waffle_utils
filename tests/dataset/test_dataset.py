@@ -148,8 +148,8 @@ def test_categories():
 
 
 @pytest.fixture
-def dataset(tmpdir: Path):
-    url = "https://github.com/snuailab/waffle_utils/raw/main/mnist.zip"
+def dataset_from_coco(tmpdir: Path):
+    url = "https://github.com/snuailab/assets/raw/main/waffle/sample_dataset/mnist.zip"
 
     dummy_zip_file = tmpdir / "mnist.zip"
     dummy_extract_dir = tmpdir / "extract"
@@ -162,6 +162,28 @@ def dataset(tmpdir: Path):
     ds = Dataset.from_coco(
         "mnist",
         coco_file=dummy_extract_dir / "exports/coco.json",
+        images_dir=Path(dummy_extract_dir / "raw"),
+        root_dir=tmpdir,
+    )
+    return ds
+
+
+@pytest.fixture
+def dataset_from_yolo(tmpdir: Path):
+    # url = "https://github.com/snuailab/assets/raw/main/waffle/sample_dataset/mnist_yolo.zip"
+    url = "https://github.com/oneQuery/waffle_utils/raw/46-need-to-import-yolo-format-dataset/mnist_yolo.zip"  # HACK: for test
+
+    dummy_zip_file = tmpdir / "mnist.zip"
+    dummy_extract_dir = tmpdir / "extract"
+
+    network.get_file_from_url(url, dummy_zip_file, create_directory=True)
+    io.unzip(dummy_zip_file, dummy_extract_dir, create_directory=True)
+
+    print(list(Path(dummy_extract_dir).glob("*")))
+
+    ds = Dataset.from_yolo(
+        "mnist",
+        yolo_txt_dir=dummy_extract_dir / "exports/yolo_txt",
         images_dir=Path(dummy_extract_dir / "raw"),
         root_dir=tmpdir,
     )
