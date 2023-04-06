@@ -309,7 +309,7 @@ class Dataset:
             yolo_txt_lines = yolo_txt.strip().splitlines()
             for yolo_txt_line in yolo_txt_lines:
                 # Parse the bounding box coordinates --------------------------------
-                class_id, *vertices = map(float, yolo_txt.split())
+                class_id, *vertices = map(float, yolo_txt_line.split())
 
                 x_coords = vertices[0::2]
                 y_coords = vertices[1::2]
@@ -330,28 +330,14 @@ class Dataset:
                 bbox = f"0 {x_center} {y_center} {width} {height}"
 
                 # Parse the segmentation coordinates -------------------------------
-                # reshape the boundary points into a Nx2 array
-                boundary = np.array(vertices).reshape(-1, 2)
-
                 # convert the boundary to COCO segmentation format
-                x, y = boundary.T
                 mask = np.zeros((300, 300), dtype=np.uint8)
                 mask[
-                    np.round(y * 299).astype(int),
-                    np.round(x * 299).astype(int),
+                    np.round(y_coords * 299).astype(int),
+                    np.round(x_coords * 299).astype(int),
                 ] = 1
                 counts = []
-                for i, row in enumerate(mask):
-                    if i == 0 or not np.array_equal(row, mask[i - 1]):
-                        counts.append(1)
-                        counts.extend(rle_encode(row))
-                    else:
-                        counts[-1] += 1
 
-                # construct the COCO segmentation annotation
-                segmentation = {"size": [300, 300], "counts": counts}
-
-                # helper function to RLE-encode a binary mask
                 def rle_encode(mask):
                     counts = []
                     for i, j in zip(np.where(mask)[0], np.where(mask)[1]):
@@ -364,6 +350,18 @@ class Dataset:
                     if counts and counts[-1] == 0:
                         counts.pop()
                     return counts
+
+                for i, row in enumerate(mask):
+                    if i == 0 or not np.array_equal(row, mask[i - 1]):
+                        counts.append(1)
+                        counts.extend(rle_encode(row))
+                    else:
+                        counts[-1] += 1
+
+                # construct the COCO segmentation annotation
+                segmentation = {"size": [300, 300], "counts": counts}
+
+                # helper function to RLE-encode a binary mask
 
                 # add annotation
                 annotation = Annotation.from_dict(
