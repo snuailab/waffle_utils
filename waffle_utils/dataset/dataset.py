@@ -290,7 +290,7 @@ class Dataset:
         # parse yolo annotation file
         for yolo_txt_file in io.list_files(yolo_txt_dir):
             yolo_txt = io.load_txt(yolo_txt_file)
-            image_id = yolo_txt_file.stem
+            image_id = int(yolo_txt_file.stem)
 
             # add image
             image = Image.from_dict(
@@ -303,15 +303,36 @@ class Dataset:
             )
             ds.add_images([image])
 
-            # add annotation
-            for line in yolo:
-                category_id, x, y, w, h = map(float, line.split())
+            # TODO: add annotation for bbox and segmentation
+            yolo_txt_lines = yolo_txt.strip().splitlines()
+            for yolo_txt_line in yolo_txt_lines:
+                vertices = list(map(float, yolo_txt_line.split()[1:]))
+                x_coords = vertices[0::2]
+                y_coords = vertices[1::2]
+
+                # Find the bounding box coordinates
+                xmin = min(x_coords)
+                xmax = max(x_coords)
+                ymin = min(y_coords)
+                ymax = max(y_coords)
+
+                # Calculate the center coordinates and width/height
+                width = xmax - xmin
+                height = ymax - ymin
+                x_center = xmin + width / 2
+                y_center = ymin + height / 2
+
+                # Format the bounding box annotation in YOLO txt format
+                bbox_yolo_txt = f"0 {x_center} {y_center} {width} {height}"
+
+                # add annotation
                 annotation = Annotation.from_dict(
                     {
                         "annotation_id": 0,
                         "image_id": image_id,
-                        "category_id": int(category_id),
-                        "bbox": [x, y, w, h],
+                        "category_id": 0,
+                        "bbox": bbox_yolo_txt,
+                        "segmentation": [],
                     }
                 )
                 ds.add_annotations([annotation])
