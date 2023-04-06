@@ -182,7 +182,7 @@ def dataset(request, tmpdir: Path):
     elif dataset_format == "yolo":
         ds = Dataset.from_yolo(
             "mnist",
-            yolo_txt_dir=dummy_extract_dir / "yolo_txt",
+            yolo_txt_dir=dummy_extract_dir / "labels",
             images_dir=Path(dummy_extract_dir / "raw"),
             root_dir=tmpdir,
         )

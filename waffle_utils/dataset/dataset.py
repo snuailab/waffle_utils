@@ -274,6 +274,7 @@ class Dataset:
         Returns:
             Dataset: Dataset Class
         """
+        # create dataset directory structure and initialize dataset class instance (ds)
         ds = cls(name, root_dir)
         if ds.initialized():
             raise FileExistsError(
@@ -281,7 +282,13 @@ class Dataset:
             )
         ds.initialize()
 
+        # check yolo_txt_dir is directory or not and convert to Path object
+        yolo_txt_dir = Path(yolo_txt_dir)
+        if not yolo_txt_dir.is_dir():
+            raise NotADirectoryError(f"{yolo_txt_dir} is not directory.")
+
         # parse yolo annotation file
+        # TODO: sort yolo_txt_dir
         for yolo_txt in io.list_files(yolo_txt_dir):
             yolo = io.load_txt(yolo_txt)
             image_id = int(yolo_txt.stem)
