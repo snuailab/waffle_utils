@@ -1,5 +1,4 @@
 import logging
-import os
 import random
 import warnings
 from functools import cached_property
@@ -283,10 +282,33 @@ class Dataset:
         ds.initialize()
 
         # parse yolo annotation file
-        yolo = io.load_txt(yolo_txt_dir)
-        ds.add_imgs([Image.from_yolo_line(line) for line in yolo])
-        ds.add_anns([Annotation.from_yolo_line(line) for line in yolo])
-        ds.add_cats([Category.from_yolo_line(line) for line in yolo])
+        for yolo_txt in io.list_files(yolo_txt_dir):
+            yolo = io.load_txt(yolo_txt)
+            image_id = int(yolo_txt.stem)
+
+            # add image
+            image = Image.from_dict(
+                {
+                    "image_id": image_id,
+                    "file_name": f"{image_id}.jpg",
+                    "width": 0,
+                    "height": 0,
+                }
+            )
+            ds.add_images([image])
+
+            # add annotation
+            for line in yolo:
+                category_id, x, y, w, h = map(float, line.split())
+                annotation = Annotation.from_dict(
+                    {
+                        "annotation_id": 0,
+                        "image_id": image_id,
+                        "category_id": int(category_id),
+                        "bbox": [x, y, w, h],
+                    }
+                )
+                ds.add_annotations([annotation])
 
         # copy raw images
         io.copy_files_to_directory(images_dir, ds.raw_image_dir)

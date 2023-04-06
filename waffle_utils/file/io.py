@@ -84,6 +84,48 @@ def load_yaml(fp: Union[str, Path]) -> dict:
     return d
 
 
+def load_txt(fp: Union[str, Path]) -> str:
+    """load txt file
+
+    Args:
+        fp (Union[str, Path]): file path.
+
+    Returns:
+        str: text
+    """
+
+    fp = Path(fp)
+
+    if not fp.exists():
+        raise FileNotFoundError(f"{fp} does not exists")
+
+    with open(fp) as f:
+        s = f.read()
+
+    return s
+
+
+def list_files(src: Union[str, Path], ext: str = None) -> list:
+    """list files in directory
+
+    Args:
+        src (Union[str, Path]): directory path.
+        ext (str, optional): extension. Defaults to None.
+
+    Returns:
+        list: file list
+    """
+
+    src = Path(src)
+    if not src.is_dir():
+        raise ValueError(f"{src} is not directory")
+
+    if ext is None:
+        return list(src.glob("**/*"))
+    else:
+        return list(src.glob(f"**/*.{ext}"))
+
+
 def copy_files_to_directory(
     src: Union[list, str, Path],
     dst: Union[str, Path],

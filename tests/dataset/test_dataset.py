@@ -147,9 +147,22 @@ def test_categories():
     C.from_dict(cat.to_dict())
 
 
-@pytest.fixture
-def dataset_from_coco(tmpdir: Path):
-    url = "https://github.com/snuailab/assets/raw/main/waffle/sample_dataset/mnist.zip"
+@pytest.fixture(
+    params=[
+        {
+            "url": "https://github.com/snuailab/assets/raw/main/waffle/sample_dataset/mnist.zip",
+            "format": "coco",
+        },
+        {
+            # 'url': "https://github.com/snuailab/assets/raw/main/waffle/sample_dataset/mnist_yolo.zip",
+            "url": "https://github.com/oneQuery/waffle_utils/raw/46-need-to-import-yolo-format-dataset/mnist_yolo.zip",  # HACK: temporal yolo mnist dataset
+            "format": "yolo",
+        },
+    ]
+)
+def dataset(request, tmpdir: Path):
+    url = request.param["url"]
+    dataset_format = request.param["format"]
 
     dummy_zip_file = tmpdir / "mnist.zip"
     dummy_extract_dir = tmpdir / "extract"
@@ -159,90 +172,41 @@ def dataset_from_coco(tmpdir: Path):
 
     print(list(Path(dummy_extract_dir).glob("*")))
 
-    ds = Dataset.from_coco(
-        "mnist",
-        coco_file=dummy_extract_dir / "exports/coco.json",
-        images_dir=Path(dummy_extract_dir / "raw"),
-        root_dir=tmpdir,
-    )
+    if dataset_format == "coco":
+        ds = Dataset.from_coco(
+            "mnist",
+            coco_file=dummy_extract_dir / "coco.json",
+            images_dir=Path(dummy_extract_dir / "raw"),
+            root_dir=tmpdir,
+        )
+    elif dataset_format == "yolo":
+        ds = Dataset.from_yolo(
+            "mnist",
+            yolo_txt_dir=dummy_extract_dir / "yolo_txt",
+            images_dir=Path(dummy_extract_dir / "raw"),
+            root_dir=tmpdir,
+        )
+    else:
+        raise ValueError(f"Unknown dataset format: {dataset_format}")
+
     return ds
 
 
-@pytest.fixture
-def dataset_from_yolo(tmpdir: Path):
-    # url = "https://github.com/snuailab/assets/raw/main/waffle/sample_dataset/mnist_yolo.zip"
-    url = "https://github.com/oneQuery/waffle_utils/raw/46-need-to-import-yolo-format-dataset/mnist_yolo.zip"  # HACK: for test
+def test_dataset_export_formats(dataset: Dataset):
+    dataset.split(0.8)
 
-    dummy_zip_file = tmpdir / "mnist.zip"
-    dummy_extract_dir = tmpdir / "extract"
+    exported_dataset_dir = dataset.export(Format.YOLO_DETECTION)
+    assert Path(exported_dataset_dir).exists()
 
-    network.get_file_from_url(url, dummy_zip_file, create_directory=True)
-    io.unzip(dummy_zip_file, dummy_extract_dir, create_directory=True)
+    exported_dataset_dir = dataset.export(Format.YOLO_CLASSIFICATION)
+    assert Path(exported_dataset_dir).exists()
 
-    print(list(Path(dummy_extract_dir).glob("*")))
+    exported_dataset_dir = dataset.export(Format.COCO_DETECTION)
+    assert Path(exported_dataset_dir).exists()
 
-    ds = Dataset.from_yolo(
-        "mnist",
-        yolo_txt_dir=dummy_extract_dir / "exports/yolo_txt",
-        images_dir=Path(dummy_extract_dir / "raw"),
-        root_dir=tmpdir,
-    )
-    return ds
-
-
-def test_dataset_export_yolo(dataset: Dataset):
-
-    if dataset_from_coco:
-
-        dataset.split(0.8)
-
-        exported_dataset_dir = dataset.export(Format.YOLO_DETECTION)
-        assert Path(exported_dataset_dir).exists()
-
-        exported_dataset_dir = dataset.export(Format.YOLO_CLASSIFICATION)
-        assert Path(exported_dataset_dir).exists()
-
-        dataset.split(0)
-        exported_dataset_dir = dataset.export(Format.YOLO_DETECTION)
-        assert (
-            len(list((Path(exported_dataset_dir) / "train").rglob("*"))) == 0
-        )
-
-    elif dataset_from_yolo:
-        dataset.split(0.8)
-
-        exported_dataset_dir = dataset.export(Format.YOLO_DETECTION)
-        assert Path(exported_dataset_dir).exists()
-
-        exported_dataset_dir = dataset.export(Format.YOLO_CLASSIFICATION)
-        assert Path(exported_dataset_dir).exists()
-
-        dataset.split(0)
-        exported_dataset_dir = dataset.export(Format.YOLO_DETECTION)
-        assert (
-            len(list((Path(exported_dataset_dir) / "train").rglob("*"))) == 0
-        )
-
-    else:
-        assert False
-
-
-def test_dataset_export_coco(dataset: Dataset):
-
-    if dataset_from_coco:
-        dataset.split(0.8)
-
-        exported_dataset_dir = dataset.export(Format.COCO_DETECTION)
-        assert Path(exported_dataset_dir).exists()
-
-    elif dataset_from_yolo:
-        dataset.split(0.8)
-
-        exported_dataset_dir = dataset.export(Format.COCO_DETECTION)
-        assert Path(exported_dataset_dir).exists()
-
-    else:
-        assert False
+    dataset.split(0)
+    exported_dataset_dir = dataset.export(Format.YOLO_DETECTION)
+    assert len(list((Path(exported_dataset_dir) / "train").rglob("*"))) == 0
 
 
 def test_predictions(dataset: Dataset):
