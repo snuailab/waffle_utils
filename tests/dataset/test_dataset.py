@@ -191,24 +191,58 @@ def dataset_from_yolo(tmpdir: Path):
 
 
 def test_dataset_export_yolo(dataset: Dataset):
-    dataset.split(0.8)
 
-    exported_dataset_dir = dataset.export(Format.YOLO_DETECTION)
-    assert Path(exported_dataset_dir).exists()
+    if dataset_from_coco:
 
-    exported_dataset_dir = dataset.export(Format.YOLO_CLASSIFICATION)
-    assert Path(exported_dataset_dir).exists()
+        dataset.split(0.8)
 
-    dataset.split(0)
-    exported_dataset_dir = dataset.export(Format.YOLO_DETECTION)
-    assert len(list((Path(exported_dataset_dir) / "train").rglob("*"))) == 0
+        exported_dataset_dir = dataset.export(Format.YOLO_DETECTION)
+        assert Path(exported_dataset_dir).exists()
+
+        exported_dataset_dir = dataset.export(Format.YOLO_CLASSIFICATION)
+        assert Path(exported_dataset_dir).exists()
+
+        dataset.split(0)
+        exported_dataset_dir = dataset.export(Format.YOLO_DETECTION)
+        assert (
+            len(list((Path(exported_dataset_dir) / "train").rglob("*"))) == 0
+        )
+
+    elif dataset_from_yolo:
+        dataset.split(0.8)
+
+        exported_dataset_dir = dataset.export(Format.YOLO_DETECTION)
+        assert Path(exported_dataset_dir).exists()
+
+        exported_dataset_dir = dataset.export(Format.YOLO_CLASSIFICATION)
+        assert Path(exported_dataset_dir).exists()
+
+        dataset.split(0)
+        exported_dataset_dir = dataset.export(Format.YOLO_DETECTION)
+        assert (
+            len(list((Path(exported_dataset_dir) / "train").rglob("*"))) == 0
+        )
+
+    else:
+        assert False
 
 
 def test_dataset_export_coco(dataset: Dataset):
-    dataset.split(0.8)
 
-    exported_dataset_dir = dataset.export(Format.COCO_DETECTION)
-    assert Path(exported_dataset_dir).exists()
+    if dataset_from_coco:
+        dataset.split(0.8)
+
+        exported_dataset_dir = dataset.export(Format.COCO_DETECTION)
+        assert Path(exported_dataset_dir).exists()
+
+    elif dataset_from_yolo:
+        dataset.split(0.8)
+
+        exported_dataset_dir = dataset.export(Format.COCO_DETECTION)
+        assert Path(exported_dataset_dir).exists()
+
+    else:
+        assert False
 
 
 def test_predictions(dataset: Dataset):
