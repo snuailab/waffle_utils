@@ -288,10 +288,9 @@ class Dataset:
             raise NotADirectoryError(f"{yolo_txt_dir} is not directory.")
 
         # parse yolo annotation file
-        # TODO: sort yolo_txt_dir
-        for yolo_txt in io.list_files(yolo_txt_dir):
-            yolo = io.load_txt(yolo_txt)
-            image_id = int(yolo_txt.stem)
+        for yolo_txt_file in io.list_files(yolo_txt_dir):
+            yolo_txt = io.load_txt(yolo_txt_file)
+            image_id = yolo_txt_file.stem
 
             # add image
             image = Image.from_dict(

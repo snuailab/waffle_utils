@@ -5,6 +5,7 @@ import zipfile
 from pathlib import Path
 from typing import Any, Union
 
+import natsort
 import yaml
 
 
@@ -121,7 +122,8 @@ def list_files(src: Union[str, Path], ext: str = None) -> list:
         raise ValueError(f"{src} is not directory")
 
     if ext is None:
-        return list(src.glob("**/*"))
+        # sort by file name
+        return natsort.natsorted(list(src.glob("**/*")))
     else:
         return list(src.glob(f"**/*.{ext}"))
 

@@ -4,6 +4,7 @@ def type_validator(_type: type, strict: bool = True):
             if v is not None:
                 if not strict:
                     v = _type(v)
+                # FIXME: isinstance(v, _type) is not working for some types.
                 elif not isinstance(v, _type):
                     raise TypeError(f"value {v} should be {_type}")
             return f(self, v, *args, **kwargs)
