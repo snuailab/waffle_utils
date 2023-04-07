@@ -3,12 +3,13 @@ import os
 import shutil
 import zipfile
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, List, Union
 
 import natsort
 import yaml
 
 
+# save
 def save_json(obj: Any, fp: Union[str, Path], create_directory: bool = False):
     """save json file
 
@@ -26,6 +27,24 @@ def save_json(obj: Any, fp: Union[str, Path], create_directory: bool = False):
         json.dump(obj, f, ensure_ascii=False, indent=4)
 
 
+def save_yaml(obj: Any, fp: Union[str, Path], create_directory: bool = False):
+    """save yaml file
+
+    Args:
+        obj (Any): Any object that can be converted to yaml format.
+        fp (Union[str, Path]): file path.
+        create_directory (bool, optional): this determines whether create parent directory or not. Default to False.
+    """
+
+    fp = Path(fp)
+    if create_directory:
+        make_directory(fp.parent)
+
+    with open(fp, "w") as f:
+        yaml.safe_dump(obj, f, indent=4, sort_keys=False)
+
+
+# load
 def load_json(fp: Union[str, Path]) -> dict:
     """load json file
 
@@ -45,23 +64,6 @@ def load_json(fp: Union[str, Path]) -> dict:
         d = json.load(f)
 
     return d
-
-
-def save_yaml(obj: Any, fp: Union[str, Path], create_directory: bool = False):
-    """save yaml file
-
-    Args:
-        obj (Any): Any object that can be converted to yaml format.
-        fp (Union[str, Path]): file path.
-        create_directory (bool, optional): this determines whether create parent directory or not. Default to False.
-    """
-
-    fp = Path(fp)
-    if create_directory:
-        make_directory(fp.parent)
-
-    with open(fp, "w") as f:
-        yaml.safe_dump(obj, f, indent=4, sort_keys=False)
 
 
 def load_yaml(fp: Union[str, Path]) -> dict:
@@ -106,6 +108,7 @@ def load_txt(fp: Union[str, Path]) -> str:
     return s
 
 
+# get
 def list_files(src: Union[str, Path], ext: str = None) -> list:
     """list files in directory
 
@@ -128,6 +131,38 @@ def list_files(src: Union[str, Path], ext: str = None) -> list:
         return list(src.glob(f"**/*.{ext}"))
 
 
+def get_extension(fp: Union[str, Path]) -> Union[str, List[str]]:
+    """get extension
+
+    if directory, return all file extensions. if file, return file extension
+
+    Args:
+        fp (Union[str, Path]): file path or directory.
+
+    Returns:
+        Union[str, List[str]]: extension
+    """
+
+    fp = Path(fp)
+
+    # get extension
+    if fp.is_dir():
+        # return file extensions without dot.
+        exts = {p.suffix[1:] for p in fp.glob("**/*") if p.is_file()}
+        # if a single extension, return a string.
+        if len(exts) == 1:
+            return exts.pop()
+        else:
+            return list(exts)
+    elif fp.is_file():
+        # return file extension without dot
+        return fp.suffix[1:]
+    else:
+        # Add an else clause with a return statement to handle cases where the path is neither a file nor a directory
+        raise ValueError(f"{fp} is neither a file nor a directory")
+
+
+# copy
 def copy_files_to_directory(
     src: Union[list, str, Path],
     dst: Union[str, Path],
@@ -206,6 +241,7 @@ def copy_file(
     shutil.copy(src, dst)
 
 
+# make
 def make_directory(src: Union[str, Path]):
     """Create Directory
 
@@ -215,6 +251,7 @@ def make_directory(src: Union[str, Path]):
     Path(src).mkdir(mode=0o766, parents=True, exist_ok=True)
 
 
+# remove
 def remove_file(src: str):
     """Remove File
 
@@ -233,6 +270,7 @@ def remove_directory(src: Union[str, Path]):
     shutil.rmtree(str(src))
 
 
+# unzip
 def unzip(
     src: Union[str, Path],
     dst: Union[str, Path],

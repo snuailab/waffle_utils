@@ -289,26 +289,38 @@ class Dataset:
         if not yolo_txt_dir.is_dir():
             raise NotADirectoryError(f"{yolo_txt_dir} is not directory.")
 
+        # get extension of image files
+        ext = io.get_extension(images_dir)
+
         # parse yolo annotation file
         for yolo_txt_file in io.list_files(yolo_txt_dir):
-            yolo_txt = io.load_txt(yolo_txt_file)
+
+            # add images ------------------------------------------------------------
+            # get image_id
             image_id = int(yolo_txt_file.stem)
+
+            # get image width and height
+            image_file = images_dir / f"{image_id}.{ext}"
+            width, height = Image.open(image_file).size
 
             # add image
             image = Image.from_dict(
                 {
                     "image_id": image_id,
                     "file_name": f"{image_id}.jpg",
-                    "width": 0,
-                    "height": 0,
+                    "width": width,
+                    "height": height,
                 }
             )
+
             ds.add_images([image])
 
-            # TODO: add annotation for bbox and segmentation
+            # add annotations for bbox -------------------------------------------------------
+            yolo_txt = io.load_txt(yolo_txt_file)
+
             yolo_txt_lines = yolo_txt.strip().splitlines()
             for yolo_txt_line in yolo_txt_lines:
-                # Parse the bounding box coordinates --------------------------------
+                # parse yolo txt line
                 class_id, *vertices = map(float, yolo_txt_line.split())
 
                 x_coords = vertices[0::2]
@@ -326,53 +338,39 @@ class Dataset:
                 x_center = xmin + width / 2
                 y_center = ymin + height / 2
 
+                # get image size
+                image_size = ds.get_image(image_id).size
+
                 # Format the bounding box annotation in YOLO txt format
-                bbox = f"0 {x_center} {y_center} {width} {height}"
-
-                # Parse the segmentation coordinates -------------------------------
-                # convert the boundary to COCO segmentation format
-                mask = np.zeros((300, 300), dtype=np.uint8)
-                mask[
-                    np.round(y_coords * 299).astype(int),
-                    np.round(x_coords * 299).astype(int),
-                ] = 1
-                counts = []
-
-                def rle_encode(mask):
-                    counts = []
-                    for i, j in zip(np.where(mask)[0], np.where(mask)[1]):
-                        if not counts:
-                            counts.extend([i * 300 + j + 1, 0])
-                        elif counts[-2] == i * 300 + j:
-                            counts[-1] += 1
-                        else:
-                            counts.extend([i * 300 + j + 1, 0])
-                    if counts and counts[-1] == 0:
-                        counts.pop()
-                    return counts
-
-                for i, row in enumerate(mask):
-                    if i == 0 or not np.array_equal(row, mask[i - 1]):
-                        counts.append(1)
-                        counts.extend(rle_encode(row))
-                    else:
-                        counts[-1] += 1
-
-                # construct the COCO segmentation annotation
-                segmentation = {"size": [300, 300], "counts": counts}
-
-                # helper function to RLE-encode a binary mask
+                bbox = [x_center, y_center, width, height] * image_size
 
                 # add annotation
                 annotation = Annotation.from_dict(
                     {
                         "annotation_id": 0,
                         "image_id": image_id,
-                        "category_id": 0,
+                        "category_id": int(class_id),
                         "bbox": bbox,
-                        "segmentation": segmentation,
-                    }
+                    },
                 )
+
+                ds.add_annotations([annotation])
+
+            # add annotations for segmentation -------------------------------------------------------
+            for yolo_txt_line in yolo_txt_lines:
+                # parse yolo txt line
+                class_id, *vertices = map(float, yolo_txt_line.split())
+
+                # add annotation
+                annotation = Annotation.from_dict(
+                    {
+                        "annotation_id": 0,
+                        "image_id": image_id,
+                        "category_id": int(class_id),
+                        "segmentation": [vertices],
+                    },
+                )
+
                 ds.add_annotations([annotation])
 
         # copy raw images
