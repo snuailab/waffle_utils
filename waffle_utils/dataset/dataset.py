@@ -259,6 +259,7 @@ class Dataset:
         name: str,
         yolo_txt_dir: Union[str, Path],
         images_dir: Union[str, Path],
+        yolo_yaml_file: Union[str, Path],
         root_dir: Optional[Union[str, Path]] = None,
     ) -> "Dataset":
         """Import Dataset from yolo format.
@@ -377,7 +378,16 @@ class Dataset:
                 ds.add_annotations([annotation])
 
             # add categories --------------------------------------------------------
-            # TODO: add categories from yolo file
+            yolo_yaml = io.load_yaml(yolo_yaml_file)
+            for category_dict in yolo_yaml["names"]:
+                category_id = category_dict.pop("id")
+                ds.add_categories(
+                    [
+                        Category.from_dict(
+                            {**category_dict, "category_id": category_id}
+                        )
+                    ]
+                )
 
         # copy raw images
         io.copy_files_to_directory(images_dir, ds.raw_image_dir)
