@@ -154,8 +154,7 @@ def test_categories():
             "format": "coco",
         },
         {
-            # 'url': "https://github.com/snuailab/assets/raw/main/waffle/sample_dataset/mnist_yolo.zip",
-            "url": "https://github.com/oneQuery/waffle_utils/raw/46-need-to-import-yolo-format-dataset/mnist_yolo.zip",  # HACK: temporal yolo mnist dataset
+            "url": "https://github.com/snuailab/assets/raw/main/waffle/sample_dataset/mnist_yolo.zip",
             "format": "yolo",
         },
     ]
@@ -176,12 +175,12 @@ def dataset(request, tmpdir: Path):
         ds = Dataset.from_coco(
             "mnist",
             coco_file=dummy_extract_dir / "coco.json",
-            images_dir=Path(dummy_extract_dir / "raw"),
+            images_dir=Path(dummy_extract_dir / "images"),
             root_dir=tmpdir,
         )
     elif dataset_format == "yolo":
         ds = Dataset.from_yolo(
-            "mnist",
+            "mnist_yolo",
             yolo_txt_dir=dummy_extract_dir / "labels",
             images_dir=Path(dummy_extract_dir / "images"),
             root_dir=tmpdir,

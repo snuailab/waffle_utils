@@ -5,9 +5,8 @@ from functools import cached_property
 from pathlib import Path
 from typing import Optional, Union
 
-import numpy as np
-
 from waffle_utils.file import io
+from waffle_utils.image.io import load_image
 from waffle_utils.utils import type_validator
 
 from .fields import Annotation, Category, Image
@@ -276,6 +275,8 @@ class Dataset:
         Returns:
             Dataset: Dataset Class
         """
+        images_dir = Path(images_dir)
+
         # create dataset directory structure and initialize dataset class instance (ds)
         ds = cls(name, root_dir)
         if ds.initialized():
@@ -289,19 +290,22 @@ class Dataset:
         if not yolo_txt_dir.is_dir():
             raise NotADirectoryError(f"{yolo_txt_dir} is not directory.")
 
-        # get extension of image files
-        ext = io.get_extension(images_dir)
-
         # parse yolo annotation file
-        for yolo_txt_file in io.list_files(yolo_txt_dir):
+        for yolo_txt_file in io.get_files_list(yolo_txt_dir):
 
             # add images ------------------------------------------------------------
             # get image_id
             image_id = int(yolo_txt_file.stem)
 
+            # get image file name using image_id. The images are in images_dir directory and the file name is {image_id}.{ext}
+            image_file_name = next(images_dir.glob(f"{image_id}.*")).name
+
+            # get extension of image file
+            ext = image_file_name.split(".")[-1]
+
             # get image width and height
             image_file = images_dir / f"{image_id}.{ext}"
-            width, height = Image.open(image_file).size
+            width, height = load_image(image_file).shape[:2]
 
             # add image
             image = Image.from_dict(

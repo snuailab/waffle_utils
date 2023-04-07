@@ -109,7 +109,7 @@ def load_txt(fp: Union[str, Path]) -> str:
 
 
 # get
-def list_files(src: Union[str, Path], ext: str = None) -> list:
+def get_files_list(src: Union[str, Path], ext: str = None) -> list:
     """list files in directory
 
     Args:
