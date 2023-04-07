@@ -110,7 +110,10 @@ class Dataset:
 
     @cached_property
     def classes(self) -> list[str]:
-        return [category.name for category in self.get_categories()]
+        categories: list[Category] = self.get_categories()
+        return [
+            c.name for c in sorted(categories, key=lambda c: c.category_id)
+        ]
 
     # factories
     @classmethod
