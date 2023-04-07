@@ -291,6 +291,7 @@ class Dataset:
             raise NotADirectoryError(f"{yolo_txt_dir} is not directory.")
 
         # parse yolo annotation file
+        annotation_id = 0
         for yolo_txt_file in io.get_files_list(yolo_txt_dir):
 
             # add images ------------------------------------------------------------
@@ -311,7 +312,7 @@ class Dataset:
             image = Image.from_dict(
                 {
                     "image_id": image_id,
-                    "file_name": f"{image_id}.jpg",
+                    "file_name": f"{image_id}.{ext}",
                     "width": width,
                     "height": height,
                 }
@@ -342,40 +343,23 @@ class Dataset:
                 x_center = xmin + width / 2
                 y_center = ymin + height / 2
 
-                # get image size
-                image_size = ds.get_image(image_id).size
-
                 # Format the bounding box annotation in YOLO txt format
-                bbox = [x_center, y_center, width, height] * image_size
+                bbox = [x_center, y_center, width, height]
 
-                # add annotation
+                # add annotation (annotation_id will be assigned incrementally)
                 annotation = Annotation.from_dict(
                     {
-                        "annotation_id": 0,
+                        "annotation_id": annotation_id,
                         "image_id": image_id,
                         "category_id": int(class_id),
                         "bbox": bbox,
                     },
                 )
+                annotation_id += 1
 
                 ds.add_annotations([annotation])
 
-            # add annotations for segmentation -------------------------------------------------------
-            for yolo_txt_line in yolo_txt_lines:
-                # parse yolo txt line
-                class_id, *vertices = map(float, yolo_txt_line.split())
-
-                # add annotation
-                annotation = Annotation.from_dict(
-                    {
-                        "annotation_id": 0,
-                        "image_id": image_id,
-                        "category_id": int(class_id),
-                        "segmentation": [vertices],
-                    },
-                )
-
-                ds.add_annotations([annotation])
+                # TODO: add segmentation
 
         # copy raw images
         io.copy_files_to_directory(images_dir, ds.raw_image_dir)
