@@ -10,7 +10,7 @@ from waffle_utils.image.io import load_image
 from waffle_utils.utils import type_validator
 
 from .fields import Annotation, Category, Image
-from .format import Format
+from .format import Format, polygon_to_rle
 
 logger = logging.getLogger(__name__)
 
@@ -306,21 +306,21 @@ class Dataset:
 
             # get image width and height
             image_file = images_dir / f"{image_id}.{ext}"
-            width, height = load_image(image_file).shape[:2]
+            image_width, image_height = load_image(image_file).shape[:2]
 
             # add image
             image = Image.from_dict(
                 {
                     "image_id": image_id,
                     "file_name": f"{image_id}.{ext}",
-                    "width": width,
-                    "height": height,
+                    "width": image_width,
+                    "height": image_height,
                 }
             )
 
             ds.add_images([image])
 
-            # add annotations for bbox -------------------------------------------------------
+            # add annotations -------------------------------------------------------
             yolo_txt = io.load_txt(yolo_txt_file)
 
             yolo_txt_lines = yolo_txt.strip().splitlines()
@@ -331,35 +331,53 @@ class Dataset:
                 x_coords = vertices[0::2]
                 y_coords = vertices[1::2]
 
+                # Multiply each element of the x_coords list by image_width using list comprehension
+                scaled_x_coords = [x * image_width for x in x_coords]
+                scaled_y_coords = [y * image_height for y in y_coords]
+
                 # Find the bounding box coordinates
-                xmin = min(x_coords)
-                xmax = max(x_coords)
-                ymin = min(y_coords)
-                ymax = max(y_coords)
+                xmin = min(scaled_x_coords)
+                xmax = max(scaled_x_coords)
+                ymin = min(scaled_y_coords)
+                ymax = max(scaled_y_coords)
 
-                # Calculate the center coordinates and width/height
-                width = xmax - xmin
-                height = ymax - ymin
-                x_center = xmin + width / 2
-                y_center = ymin + height / 2
+                # Calculate the width/height
+                bbox_width = xmax - xmin
+                bbox_height = ymax - ymin
 
-                # Format the bounding box annotation in YOLO txt format
-                bbox = [x_center, y_center, width, height]
+                # format the bounding box in the waffle format [xmin, ymin, width, height]
+                bbox = [
+                    int(xmin),
+                    int(ymin),
+                    int(bbox_width),
+                    int(bbox_height),
+                ]
+
+                # format the segmentation (vertices polygon to RLE)
+                segmentation = polygon_to_rle(
+                    image_width, image_height, scaled_x_coords, scaled_y_coords
+                )
 
                 # add annotation (annotation_id will be assigned incrementally)
+                annotation_id += 1
                 annotation = Annotation.from_dict(
                     {
                         "annotation_id": annotation_id,
                         "image_id": image_id,
-                        "category_id": int(class_id),
+                        "category_id": int(class_id) + 1,
                         "bbox": bbox,
+                        "segmentation": {
+                            "size": [image_width, image_height],
+                            "counts": segmentation,
+                        },
+                        "area": int(bbox_width * bbox_height),
                     },
                 )
-                annotation_id += 1
 
                 ds.add_annotations([annotation])
 
-                # TODO: add segmentation
+            # add categories --------------------------------------------------------
+            # TODO: add categories from yolo file
 
         # copy raw images
         io.copy_files_to_directory(images_dir, ds.raw_image_dir)
