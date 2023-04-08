@@ -377,17 +377,22 @@ class Dataset:
 
                 ds.add_annotations([annotation])
 
-            # add categories --------------------------------------------------------
-            yolo_yaml = io.load_yaml(yolo_yaml_file)
-            for category_dict in yolo_yaml["names"]:
-                category_id = category_dict.pop("id")
-                ds.add_categories(
-                    [
-                        Category.from_dict(
-                            {**category_dict, "category_id": category_id}
-                        )
-                    ]
-                )
+        # add categories --------------------------------------------------------
+        yolo_yaml = io.load_yaml(yolo_yaml_file)
+        category_id = 0
+        for name in yolo_yaml["names"]:
+            category_id += 1
+            ds.add_categories(
+                [
+                    Category.from_dict(
+                        {
+                            "category_id": category_id,
+                            "supercategory": None,
+                            "name": name,
+                        }
+                    )
+                ]
+            )
 
         # copy raw images
         io.copy_files_to_directory(images_dir, ds.raw_image_dir)
