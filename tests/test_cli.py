@@ -27,8 +27,12 @@ def tmp_path_module():
 
 # Define fixtures for temporary paths and variables
 @pytest.fixture(scope="module")
-def zip_file(tmp_path_module):
-    return tmp_path_module / "mnist.zip"
+def coco_zip_file(tmp_path_module):
+    return tmp_path_module / "mnist_coco.zip"
+
+
+def yolo_zip_file(tmp_path_module):
+    return tmp_path_module / "mnist_yolo.zip"
 
 
 @pytest.fixture(scope="module")
@@ -37,8 +41,13 @@ def extract_dir(tmp_path_module):
 
 
 @pytest.fixture(scope="module")
-def data_root_dir(tmp_path_module):
-    return tmp_path_module / "tmp/dataset"
+def coco_data_root_dir(tmp_path_module):
+    return tmp_path_module / "tmp/dataset_from_coco"
+
+
+@pytest.fixture(scope="module")
+def yolo_data_root_dir(tmp_path_module):
+    return tmp_path_module / "tmp/dataset_from_yolo"
 
 
 @pytest.fixture(scope="module")
@@ -47,19 +56,38 @@ def dataset_name():
 
 
 @pytest.fixture(scope="module")
-def coco_root_dir(extract_dir):
-    return extract_dir / "raw"
+def coco_images_dir(extract_dir):
+    return extract_dir / "images"
 
 
 @pytest.fixture(scope="module")
 def coco_file(extract_dir):
-    return extract_dir / "exports/coco.json"
+    return extract_dir / "coco.json"
+
+
+@pytest.fixture(scope="module")
+def yolo_images_dir(extract_dir):
+    return extract_dir / "images"
+
+
+@pytest.fixture(scope="module")
+def yolo_txt_dir(extract_dir):
+    return extract_dir / "labels"
+
+
+@pytest.fixture(scope="module")
+def yolo_yaml_file(extract_dir):
+    return extract_dir / "data.yaml"
 
 
 # Define tests for dataset-related functions
+# TODO: separate coco and yolo tests
 def test_get_file_from_url(zip_file):
     run(
-        f"python -m waffle_utils.run get_file_from_url --url https://github.com/snuailab/waffle_utils/raw/main/mnist.zip --file-path {zip_file}"
+        f"python -m waffle_utils.run get_file_from_url --url https://github.com/snuailab/assets/raw/main/waffle/sample_dataset/mnist.zip --file-path {zip_file}"
+    )
+    run(
+        f"python -m waffle_utils.run get_file_from_url --url https://github.com/snuailab/assets/raw/main/waffle/sample_dataset/mnist_yolo.zip --file-path {zip_file}"
     )
 
 
@@ -67,11 +95,28 @@ def test_unzip(zip_file, extract_dir):
     run(
         f"python -m waffle_utils.run unzip --file-path {zip_file} --output-dir {extract_dir}"
     )
-
-
-def test_from_coco(data_root_dir, dataset_name, coco_file, coco_root_dir):
     run(
-        f"python -m waffle_utils.run from_coco --name {dataset_name} --coco-file {coco_file} --coco-root-dir {coco_root_dir} --root-dir {data_root_dir}"
+        f"python -m waffle_utils.run unzip --file-path {zip_file} --output-dir {extract_dir}"
+    )
+
+
+def test_from_coco(
+    coco_data_root_dir, dataset_name, coco_file, coco_images_dir
+):
+    run(
+        f"python -m waffle_utils.run from_coco --name {dataset_name} --coco-file {coco_file} --images-dir {coco_images_dir} --root-dir {coco_data_root_dir}"
+    )
+
+
+def test_from_yolo(
+    yolo_data_root_dir,
+    dataset_name,
+    yolo_txt_dir,
+    yolo_yaml_file,
+    yolo_images_dir,
+):
+    run(
+        f"python -m waffle_utils.run from_yolo --name {dataset_name} --yolo-txt-dir {yolo_txt_dir} --yolo-yaml-file {yolo_yaml_file} --images-dir {yolo_images_dir} --root-dir {yolo_data_root_dir}"
     )
 
 

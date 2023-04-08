@@ -208,7 +208,7 @@ class Dataset:
         Args:
             name (str): Dataset name.
             coco_file (str): Coco json file path.
-            coco_root_dir (str): Coco image root directory.
+            images_dir (str): Coco image root directory.
             root_dir (str, optional): Dataset root directory. Defaults to None.
 
         Raises:
@@ -260,8 +260,8 @@ class Dataset:
         cls,
         name: str,
         yolo_txt_dir: Union[str, Path],
-        images_dir: Union[str, Path],
         yolo_yaml_file: Union[str, Path],
+        images_dir: Union[str, Path],
         root_dir: Optional[Union[str, Path]] = None,
     ) -> "Dataset":
         """

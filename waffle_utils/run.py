@@ -31,7 +31,7 @@ root_dir_docs = "Dataset Root Directory. Default to ./datasets"
 
 # coco docs
 coco_file_docs = "COCO json file"
-coco_root_dir_docs = "COCO image root directory"
+images_dir_docs = "COCO image root directory"
 
 # split docs
 train_split_ratio_docs = (
@@ -68,7 +68,7 @@ def _unzip(
 def _from_coco(
     name: str = typer.Option(..., help=name_docs),
     coco_file: str = typer.Option(..., help=coco_file_docs),
-    coco_root_dir: str = typer.Option(..., help=coco_root_dir_docs),
+    images_dir: str = typer.Option(..., help=images_dir_docs),
     root_dir: str = typer.Option(None, help=root_dir_docs),
 ):
     """Import Dataset from COCO Format"""
@@ -76,7 +76,26 @@ def _from_coco(
     Dataset.from_coco(
         name,
         coco_file=coco_file,
-        images_dir=coco_root_dir,
+        images_dir=images_dir,
+        root_dir=root_dir,
+    )
+
+
+@app.command(name="from_yolo")
+def _from_yolo(
+    name: str = typer.Option(..., help=name_docs),
+    yolo_txt_dir: str = typer.Option(..., help="yolo txt directory"),
+    yolo_yaml_file: str = typer.Option(..., help="yolo yaml file"),
+    images_dir: str = typer.Option(..., help="yolo image directory"),
+    root_dir: str = typer.Option(None, help=root_dir_docs),
+):
+    """Import Dataset from YOLO Format"""
+
+    Dataset.from_yolo(
+        name,
+        yolo_txt_dir=yolo_txt_dir,
+        yolo_yaml_file=yolo_yaml_file,
+        images_dir=images_dir,
         root_dir=root_dir,
     )
 
