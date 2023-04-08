@@ -13,6 +13,7 @@ class Format(enum.Flag):
     COCO_DETECTION = enum.auto()
 
 
+# convert
 def mask_to_rle(mask):
     """Convert mask to RLE.
 
