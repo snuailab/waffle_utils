@@ -31,13 +31,19 @@ def coco_zip_file(tmp_path_module):
     return tmp_path_module / "mnist_coco.zip"
 
 
+@pytest.fixture(scope="module")
 def yolo_zip_file(tmp_path_module):
     return tmp_path_module / "mnist_yolo.zip"
 
 
 @pytest.fixture(scope="module")
-def extract_dir(tmp_path_module):
-    return tmp_path_module / "tmp/extract"
+def coco_extract_dir(tmp_path_module):
+    return tmp_path_module / "tmp/coco_extracted"
+
+
+@pytest.fixture(scope="module")
+def yolo_extract_dir(tmp_path_module):
+    return tmp_path_module / "tmp/yolo_extracted"
 
 
 @pytest.fixture(scope="module")
@@ -56,47 +62,48 @@ def dataset_name():
 
 
 @pytest.fixture(scope="module")
-def coco_images_dir(extract_dir):
-    return extract_dir / "images"
+def coco_images_dir(coco_extract_dir):
+    return coco_extract_dir / "images"
 
 
 @pytest.fixture(scope="module")
-def coco_file(extract_dir):
-    return extract_dir / "coco.json"
+def coco_file(coco_extract_dir):
+    return coco_extract_dir / "coco.json"
 
 
 @pytest.fixture(scope="module")
-def yolo_images_dir(extract_dir):
-    return extract_dir / "images"
+def yolo_images_dir(yolo_extract_dir):
+    return yolo_extract_dir / "images"
 
 
 @pytest.fixture(scope="module")
-def yolo_txt_dir(extract_dir):
-    return extract_dir / "labels"
+def yolo_txt_dir(yolo_extract_dir):
+    return yolo_extract_dir / "labels"
 
 
 @pytest.fixture(scope="module")
-def yolo_yaml_file(extract_dir):
-    return extract_dir / "data.yaml"
+def yolo_yaml_file(yolo_extract_dir):
+    return yolo_extract_dir / "data.yaml"
 
 
 # Define tests for dataset-related functions
-# TODO: separate coco and yolo tests
-def test_get_file_from_url(zip_file):
+def test_get_file_from_url(coco_zip_file, yolo_zip_file):
     run(
-        f"python -m waffle_utils.run get_file_from_url --url https://github.com/snuailab/assets/raw/main/waffle/sample_dataset/mnist.zip --file-path {zip_file}"
+        f"python -m waffle_utils.run get_file_from_url --url https://github.com/snuailab/assets/raw/main/waffle/sample_dataset/mnist.zip --file-path {coco_zip_file}"
     )
     run(
-        f"python -m waffle_utils.run get_file_from_url --url https://github.com/snuailab/assets/raw/main/waffle/sample_dataset/mnist_yolo.zip --file-path {zip_file}"
+        f"python -m waffle_utils.run get_file_from_url --url https://github.com/snuailab/assets/raw/main/waffle/sample_dataset/mnist_yolo.zip --file-path {yolo_zip_file}"
     )
 
 
-def test_unzip(zip_file, extract_dir):
+def test_unzip(
+    coco_zip_file, yolo_zip_file, coco_extract_dir, yolo_extract_dir
+):
     run(
-        f"python -m waffle_utils.run unzip --file-path {zip_file} --output-dir {extract_dir}"
+        f"python -m waffle_utils.run unzip --file-path {coco_zip_file} --output-dir {coco_extract_dir}"
     )
     run(
-        f"python -m waffle_utils.run unzip --file-path {zip_file} --output-dir {extract_dir}"
+        f"python -m waffle_utils.run unzip --file-path {yolo_zip_file} --output-dir {yolo_extract_dir}"
     )
 
 
@@ -120,18 +127,27 @@ def test_from_yolo(
     )
 
 
-def test_split(data_root_dir, dataset_name):
+def test_split(coco_data_root_dir, yolo_data_root_dir, dataset_name):
     run(
-        f"python -m waffle_utils.run split --name {dataset_name} --root-dir {data_root_dir} --train-split-ratio 0.8"
+        f"python -m waffle_utils.run split --name {dataset_name} --root-dir {coco_data_root_dir} --train-split-ratio 0.8"
+    )
+    run(
+        f"python -m waffle_utils.run split --name {dataset_name} --root-dir {yolo_data_root_dir} --train-split-ratio 0.8"
     )
 
 
-def test_export(data_root_dir, dataset_name):
+def test_export(coco_data_root_dir, yolo_data_root_dir, dataset_name):
     run(
-        f"python -m waffle_utils.run export --name {dataset_name} --root-dir {data_root_dir} --export-format yolo_detection"
+        f"python -m waffle_utils.run export --name {dataset_name} --root-dir {coco_data_root_dir} --export-format yolo_detection"
     )
     run(
-        f"python -m waffle_utils.run export --name {dataset_name} --root-dir {data_root_dir} --export-format coco_detection"
+        f"python -m waffle_utils.run export --name {dataset_name} --root-dir {coco_data_root_dir} --export-format coco_detection"
+    )
+    run(
+        f"python -m waffle_utils.run export --name {dataset_name} --root-dir {yolo_data_root_dir} --export-format yolo_detection"
+    )
+    run(
+        f"python -m waffle_utils.run export --name {dataset_name} --root-dir {yolo_data_root_dir} --export-format coco_detection"
     )
 
 
