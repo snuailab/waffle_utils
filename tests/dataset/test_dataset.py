@@ -149,7 +149,7 @@ def test_categories():
 
 @pytest.fixture
 def dataset(tmpdir: Path):
-    url = "https://github.com/snuailab/waffle_utils/raw/main/mnist.zip"
+    url = "https://raw.githubusercontent.com/snuailab/assets/main/waffle/sample_dataset/mnist.zip"
 
     dummy_zip_file = tmpdir / "mnist.zip"
     dummy_extract_dir = tmpdir / "extract"
@@ -161,8 +161,8 @@ def dataset(tmpdir: Path):
 
     ds = Dataset.from_coco(
         "mnist",
-        coco_file=dummy_extract_dir / "exports/coco.json",
-        coco_root_dir=Path(dummy_extract_dir / "raw"),
+        coco_file=dummy_extract_dir / "coco.json",
+        coco_root_dir=Path(dummy_extract_dir / "images"),
         root_dir=tmpdir,
     )
     return ds
