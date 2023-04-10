@@ -450,7 +450,7 @@ class Dataset:
             )
         ds.initialize()
 
-        if self.task == "object_detection":
+        if task == "object_detection":
             # FIXME: get yolo txt dir from yolo root dir
             # FIXME: get yolo yaml file from yolo root dir
 
@@ -496,15 +496,15 @@ class Dataset:
             # Copy raw images to the dataset directory
             io.copy_files_to_directory(images_dir, ds.raw_image_dir)
 
-        elif self.task == "classification":
+        elif task == "classification":
             # TODO: Implement classification task
             pass
-        elif self.task == "segmentation":
+        elif task == "segmentation":
             raise NotImplementedError(
                 "Segmentation task is not implemented yet."
             )
         else:
-            raise ValueError(f"Invalid task: {self.task}")
+            raise ValueError(f"Invalid task: {task}")
 
         return ds
 
