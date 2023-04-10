@@ -156,12 +156,19 @@ def test_categories():
         {
             "url": "https://github.com/snuailab/assets/raw/main/waffle/sample_dataset/mnist_yolo.zip",
             "format": "yolo",
+            "task": "classification",
+        },
+        {
+            "url": "https://github.com/snuailab/assets/raw/main/waffle/sample_dataset/mnist_yolo.zip",
+            "format": "yolo",
+            "task": "object_detection",
         },
     ]
 )
 def dataset(request, tmpdir: Path):
     url = request.param["url"]
     dataset_format = request.param["format"]
+    task = request.param.get("task")
 
     dummy_zip_file = tmpdir / "mnist.zip"
     dummy_extract_dir = tmpdir / "extract"
@@ -179,13 +186,25 @@ def dataset(request, tmpdir: Path):
             root_dir=tmpdir,
         )
     elif dataset_format == "yolo":
-        ds = Dataset.from_yolo(
-            "mnist_yolo",
-            yolo_txt_dir=dummy_extract_dir / "labels",
-            yolo_yaml_file=dummy_extract_dir / "data.yaml",
-            images_dir=Path(dummy_extract_dir / "images"),
-            root_dir=tmpdir,
-        )
+        # FIXME: input arguments are not matched with the function
+        if task == "classification":
+            ds = Dataset.from_yolo(
+                "mnist_yolo",
+                yolo_txt_dir=dummy_extract_dir / "labels",
+                yolo_yaml_file=dummy_extract_dir / "data.yaml",
+                images_dir=Path(dummy_extract_dir / "images"),
+                root_dir=tmpdir,
+            )
+        elif task == "object_detection":
+            ds = Dataset.from_yolo(
+                "mnist_yolo",
+                yolo_txt_dir=dummy_extract_dir / "labels",
+                yolo_yaml_file=dummy_extract_dir / "data.yaml",
+                images_dir=Path(dummy_extract_dir / "images"),
+                root_dir=tmpdir,
+            )
+        else:
+            raise ValueError(f"Unknown task: {task}")
     else:
         raise ValueError(f"Unknown dataset format: {dataset_format}")
 

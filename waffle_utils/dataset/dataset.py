@@ -18,6 +18,8 @@ logger = logging.getLogger(__name__)
 
 
 class Dataset:
+    VALID_TASK_OPTIONS = ["classification", "object_detection"]
+
     DEFAULT_DATASET_ROOT_DIR = Path("./datasets")
     RAW_IMAGE_DIR = Path("raw")
     IMAGE_DIR = Path("images")
@@ -35,12 +37,18 @@ class Dataset:
     def __init__(
         self,
         name: str,
+        task: str,
         root_dir: Optional[Union[str, Path]] = None,
     ):
+        # check valid task option
+        self._validate_task(task)
+
+        # set properties
         self.name = name
         self.root_dir = (
             Path(root_dir) if root_dir else Dataset.DEFAULT_DATASET_ROOT_DIR
         )
+        self.task = task
 
     # properties
     @property
@@ -60,6 +68,15 @@ class Dataset:
     @type_validator(Path)
     def root_dir(self, v):
         self.__root_dir = v
+
+    @property
+    def task(self):
+        return self.__task
+
+    @task.setter
+    @type_validator(str)
+    def task(self, v):
+        self.__task = v
 
     # cached properties
     @cached_property
@@ -259,8 +276,8 @@ class Dataset:
     def from_yolo(
         cls,
         name: str,
-        yolo_txt_dir: Union[str, Path],
-        yolo_yaml_file: Union[str, Path],
+        task: str,
+        yolo_root_dir: Union[str, Path],
         images_dir: Union[str, Path],
         root_dir: Optional[Union[str, Path]] = None,
     ) -> "Dataset":
@@ -281,57 +298,203 @@ class Dataset:
         Returns:
             Dataset: Dataset instance.
         """
+        # check valid task type
+        cls._validate_task(task)
+
+        # function to process a single image
+        def _process_image(
+            ds: "Dataset", images_dir: Path, yolo_txt_file: Path
+        ) -> Tuple[int, int, int]:
+            """Processes an image file, adds it to the dataset, and returns its ID and dimensions.
+
+            Args:
+                ds (Dataset): The Dataset object to add the image to.
+                images_dir (Path): The directory containing the image files.
+                yolo_txt_file (Path): The path to the YOLO annotation file associated with the image.
+
+            Returns:
+                Tuple[int, int, int]: A tuple containing the image ID, width, and height.
+            """
+            # Extract the image_id from the yolo_txt_file name
+            image_id = int(yolo_txt_file.stem)
+
+            # Find the image file with the same id in the images_dir
+            image_file_name = next(images_dir.glob(f"{image_id}.*")).name
+            ext = image_file_name.split(".")[-1]
+            image_file = images_dir / f"{image_id}.{ext}"
+
+            # Load the image and get its dimensions
+            image_width, image_height = load_image(image_file).shape[:2]
+
+            # Create an Image instance from the image data
+            image = Image.from_dict(
+                {
+                    "image_id": image_id,
+                    "file_name": f"{image_id}.{ext}",
+                    "width": image_width,
+                    "height": image_height,
+                }
+            )
+
+            # Add the image to the dataset
+            ds.add_images([image])
+
+            return image_id, image_width, image_height
+
+        # function to process a single annotation file
+        def _process_annotations(
+            ds: "Dataset",
+            yolo_txt_file: Path,
+            image_id: int,
+            image_width: int,
+            image_height: int,
+            annotation_id: int,
+        ) -> int:
+            """Processes the annotations from a YOLO annotation file and adds them to the dataset.
+
+            Args:
+                ds (Dataset): The Dataset object to add annotations to.
+                yolo_txt_file (Path): The path to the YOLO annotation file.
+                image_id (int): The ID of the image associated with the annotations.
+                image_width (int): The width of the image associated with the annotations.
+                image_height (int): The height of the image associated with the annotations.
+                annotation_id (int): The starting annotation ID to be used for adding new annotations.
+
+            Returns:
+                int: The updated annotation ID after processing all annotations in the file.
+            """
+            # Load and split the YOLO annotation file into lines
+            yolo_txt = io.load_txt(yolo_txt_file)
+            yolo_txt_lines = yolo_txt.strip().splitlines()
+
+            # Process each line in the YOLO annotation file
+            for yolo_txt_line in yolo_txt_lines:
+                # Parse the class_id and vertices from the annotation line
+                class_id, *vertices = map(float, yolo_txt_line.split())
+                class_id = int(class_id)
+
+                # Scale the x and y coordinates of the vertices
+                scaled_x_coords = [
+                    int(np.round(x * image_width)) for x in vertices[0::2]
+                ]
+                scaled_y_coords = [
+                    int(np.round(y * image_height)) for y in vertices[1::2]
+                ]
+
+                # Calculate the bounding box coordinates and dimensions
+                xmin, xmax, ymin, ymax = (
+                    min(scaled_x_coords),
+                    max(scaled_x_coords),
+                    min(scaled_y_coords),
+                    max(scaled_y_coords),
+                )
+                bbox_width = int(np.round(xmax - xmin))
+                bbox_height = int(np.round(ymax - ymin))
+
+                # Create the bounding box and segmentation data
+                bbox = [xmin, ymin, bbox_width, bbox_height]
+                segmentation = polygon_to_rle(
+                    image_width, image_height, scaled_x_coords, scaled_y_coords
+                )
+                area = bbox_width * bbox_height
+
+                # Check if the values are integers
+                assert isinstance(annotation_id, int)
+                assert isinstance(image_id, int)
+                assert isinstance(class_id, int)
+                assert isinstance(bbox, list) and all(
+                    isinstance(x, int) for x in bbox
+                )
+                assert isinstance(image_width, int)
+                assert isinstance(image_height, int)
+                assert isinstance(segmentation, list) and all(
+                    isinstance(x, int) for x in segmentation
+                )
+                assert isinstance(area, int)
+
+                # Create the annotation dictionary and add it to the dataset
+                annotation = Annotation.from_dict(
+                    {
+                        "annotation_id": annotation_id,
+                        "image_id": image_id,
+                        "category_id": class_id + 1,
+                        "bbox": bbox,
+                        "segmentation": {
+                            "size": [image_width, image_height],
+                            "counts": segmentation,
+                        },
+                        "area": area,
+                    }
+                )
+
+                ds.add_annotations([annotation])
+                annotation_id += 1
+
+            # Return the updated annotation_id
+            return annotation_id
+
         images_dir = Path(images_dir)
 
         # Initialize the dataset
-        ds = cls(name, root_dir)
+        ds = cls(name, task, root_dir)
         if ds.initialized():
             raise FileExistsError(
                 f"{ds.dataset_dir} already exists. Try another name."
             )
         ds.initialize()
 
-        # Ensure yolo_txt_dir is a directory and convert it to a Path object
-        yolo_txt_dir = Path(yolo_txt_dir)
-        if not yolo_txt_dir.is_dir():
-            raise NotADirectoryError(f"{yolo_txt_dir} is not a directory.")
+        if self.task == "object_detection":
+            # Ensure yolo_txt_dir is a directory and convert it to a Path object
+            yolo_txt_dir = Path(yolo_txt_dir)
+            if not yolo_txt_dir.is_dir():
+                raise NotADirectoryError(f"{yolo_txt_dir} is not a directory.")
 
-        annotation_id = 1
-        for yolo_txt_file in io.get_files_list(yolo_txt_dir):
-            # Process images
-            image_id, image_width, image_height = cls._process_image(
-                ds, images_dir, yolo_txt_file
+            annotation_id = 1
+            for yolo_txt_file in io.get_files_list(yolo_txt_dir):
+                # Process images
+                image_id, image_width, image_height = _process_image(
+                    ds, images_dir, yolo_txt_file
+                )
+
+                # Process annotations
+                annotation_id = _process_annotations(
+                    ds,
+                    yolo_txt_file,
+                    image_id,
+                    image_width,
+                    image_height,
+                    annotation_id,
+                )
+
+            # Process categories
+            yolo_yaml = io.load_yaml(yolo_yaml_file)
+            category_id = 0
+            for name in yolo_yaml["names"]:
+                category_id += 1
+                ds.add_categories(
+                    [
+                        Category.from_dict(
+                            {
+                                "category_id": category_id,
+                                "supercategory": None,
+                                "name": name,
+                            }
+                        )
+                    ]
+                )
+
+            # Copy raw images to the dataset directory
+            io.copy_files_to_directory(images_dir, ds.raw_image_dir)
+
+        elif self.task == "classification":
+            # TODO: Implement classification task
+            pass
+        elif self.task == "segmentation":
+            raise NotImplementedError(
+                "Segmentation task is not implemented yet."
             )
-
-            # Process annotations
-            annotation_id = cls._process_annotations(
-                ds,
-                yolo_txt_file,
-                image_id,
-                image_width,
-                image_height,
-                annotation_id,
-            )
-
-        # Process categories
-        yolo_yaml = io.load_yaml(yolo_yaml_file)
-        category_id = 0
-        for name in yolo_yaml["names"]:
-            category_id += 1
-            ds.add_categories(
-                [
-                    Category.from_dict(
-                        {
-                            "category_id": category_id,
-                            "supercategory": None,
-                            "name": name,
-                        }
-                    )
-                ]
-            )
-
-        # Copy raw images to the dataset directory
-        io.copy_files_to_directory(images_dir, ds.raw_image_dir)
+        else:
+            raise ValueError(f"Invalid task: {self.task}")
 
         return ds
 
@@ -867,135 +1030,10 @@ class Dataset:
 
             return str(export_dir)
 
-    # static methods for processing yolo format
+    # validation check
     @staticmethod
-    def _process_image(
-        ds: "Dataset", images_dir: Path, yolo_txt_file: Path
-    ) -> Tuple[int, int, int]:
-        """Processes an image file, adds it to the dataset, and returns its ID and dimensions.
-
-        Args:
-            ds (Dataset): The Dataset object to add the image to.
-            images_dir (Path): The directory containing the image files.
-            yolo_txt_file (Path): The path to the YOLO annotation file associated with the image.
-
-        Returns:
-            Tuple[int, int, int]: A tuple containing the image ID, width, and height.
-        """
-        # Extract the image_id from the yolo_txt_file name
-        image_id = int(yolo_txt_file.stem)
-
-        # Find the image file with the same id in the images_dir
-        image_file_name = next(images_dir.glob(f"{image_id}.*")).name
-        ext = image_file_name.split(".")[-1]
-        image_file = images_dir / f"{image_id}.{ext}"
-
-        # Load the image and get its dimensions
-        image_width, image_height = load_image(image_file).shape[:2]
-
-        # Create an Image instance from the image data
-        image = Image.from_dict(
-            {
-                "image_id": image_id,
-                "file_name": f"{image_id}.{ext}",
-                "width": image_width,
-                "height": image_height,
-            }
-        )
-
-        # Add the image to the dataset
-        ds.add_images([image])
-
-        return image_id, image_width, image_height
-
-    @staticmethod
-    def _process_annotations(
-        ds: "Dataset",
-        yolo_txt_file: Path,
-        image_id: int,
-        image_width: int,
-        image_height: int,
-        annotation_id: int,
-    ) -> int:
-        """Processes the annotations from a YOLO annotation file and adds them to the dataset.
-
-        Args:
-            ds (Dataset): The Dataset object to add annotations to.
-            yolo_txt_file (Path): The path to the YOLO annotation file.
-            image_id (int): The ID of the image associated with the annotations.
-            image_width (int): The width of the image associated with the annotations.
-            image_height (int): The height of the image associated with the annotations.
-            annotation_id (int): The starting annotation ID to be used for adding new annotations.
-
-        Returns:
-            int: The updated annotation ID after processing all annotations in the file.
-        """
-        # Load and split the YOLO annotation file into lines
-        yolo_txt = io.load_txt(yolo_txt_file)
-        yolo_txt_lines = yolo_txt.strip().splitlines()
-
-        # Process each line in the YOLO annotation file
-        for yolo_txt_line in yolo_txt_lines:
-            # Parse the class_id and vertices from the annotation line
-            class_id, *vertices = map(float, yolo_txt_line.split())
-            class_id = int(class_id)
-
-            # Scale the x and y coordinates of the vertices
-            scaled_x_coords = [
-                int(np.round(x * image_width)) for x in vertices[0::2]
-            ]
-            scaled_y_coords = [
-                int(np.round(y * image_height)) for y in vertices[1::2]
-            ]
-
-            # Calculate the bounding box coordinates and dimensions
-            xmin, xmax, ymin, ymax = (
-                min(scaled_x_coords),
-                max(scaled_x_coords),
-                min(scaled_y_coords),
-                max(scaled_y_coords),
+    def _validate_task(task: str) -> None:
+        if task not in Dataset.VALID_TASK_OPTIONS:
+            raise ValueError(
+                f"Invalid task: {task}. Valid tasks are {Dataset.VALID_TASK_OPTIONS}"
             )
-            bbox_width = int(np.round(xmax - xmin))
-            bbox_height = int(np.round(ymax - ymin))
-
-            # Create the bounding box and segmentation data
-            bbox = [xmin, ymin, bbox_width, bbox_height]
-            segmentation = polygon_to_rle(
-                image_width, image_height, scaled_x_coords, scaled_y_coords
-            )
-            area = bbox_width * bbox_height
-
-            # Check if the values are integers
-            assert isinstance(annotation_id, int)
-            assert isinstance(image_id, int)
-            assert isinstance(class_id, int)
-            assert isinstance(bbox, list) and all(
-                isinstance(x, int) for x in bbox
-            )
-            assert isinstance(image_width, int)
-            assert isinstance(image_height, int)
-            assert isinstance(segmentation, list) and all(
-                isinstance(x, int) for x in segmentation
-            )
-            assert isinstance(area, int)
-
-            # Create the annotation dictionary and add it to the dataset
-            annotation = Annotation.from_dict(
-                {
-                    "annotation_id": annotation_id,
-                    "image_id": image_id,
-                    "category_id": class_id + 1,
-                    "bbox": bbox,
-                    "segmentation": {
-                        "size": [image_width, image_height],
-                        "counts": segmentation,
-                    },
-                    "area": area,
-                }
-            )
-
-            ds.add_annotations([annotation])
-            annotation_id += 1
-
-        # Return the updated annotation_id
-        return annotation_id
