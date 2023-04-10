@@ -452,6 +452,7 @@ class Dataset:
         ds.initialize()
 
         if task == "classification":
+            # Ensure labels_dir and yaml_file are None
             if labels_dir is not None or yaml_file is not None:
                 raise ValueError(
                     "Classification task does not require labels or YAML file"
@@ -461,9 +462,8 @@ class Dataset:
             pass
 
         elif task == "object_detection":
-            # FIXME: get yolo txt dir from root dir
-            # FIXME: get yolo yaml file from root dir
 
+            # Ensure labels_dir and yaml_file are not None
             if labels_dir is None or yaml_file is None:
                 raise ValueError(
                     "Object detection task requires labels directory and YAML file"
