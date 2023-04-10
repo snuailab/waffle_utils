@@ -154,12 +154,12 @@ def test_categories():
             "format": "coco",
         },
         {
-            "url": "https://github.com/snuailab/assets/raw/main/waffle/sample_dataset/mnist_yolo.zip",
+            "url": "https://github.com/snuailab/assets/raw/main/waffle/sample_dataset/mnist_yolo_classification.zip",
             "format": "yolo",
             "task": "classification",
         },
         {
-            "url": "https://github.com/snuailab/assets/raw/main/waffle/sample_dataset/mnist_yolo.zip",
+            "url": "https://github.com/snuailab/assets/raw/main/waffle/sample_dataset/mnist_yolo_object_detection.zip",
             "format": "yolo",
             "task": "object_detection",
         },
@@ -168,7 +168,7 @@ def test_categories():
 def dataset(request, tmpdir: Path):
     url = request.param["url"]
     dataset_format = request.param["format"]
-    task = request.param.get("task")
+    task = request.param.get("task", None)
 
     dummy_zip_file = tmpdir / "mnist.zip"
     dummy_extract_dir = tmpdir / "extract"
@@ -186,21 +186,20 @@ def dataset(request, tmpdir: Path):
             root_dir=tmpdir,
         )
     elif dataset_format == "yolo":
-        # FIXME: input arguments are not matched with the function
         if task == "classification":
             ds = Dataset.from_yolo(
-                "mnist_yolo",
-                yolo_txt_dir=dummy_extract_dir / "labels",
-                yolo_yaml_file=dummy_extract_dir / "data.yaml",
+                name="mnist_yolo_classification",
+                task="classification",
                 images_dir=Path(dummy_extract_dir / "images"),
                 root_dir=tmpdir,
             )
         elif task == "object_detection":
             ds = Dataset.from_yolo(
-                "mnist_yolo",
-                yolo_txt_dir=dummy_extract_dir / "labels",
-                yolo_yaml_file=dummy_extract_dir / "data.yaml",
+                name="mnist_yolo_object_detection",
+                task="object_detection",
                 images_dir=Path(dummy_extract_dir / "images"),
+                labels_dir=Path(dummy_extract_dir / "labels"),
+                yaml_file=Path(dummy_extract_dir / "data.yaml"),
                 root_dir=tmpdir,
             )
         else:

@@ -284,8 +284,9 @@ class Dataset:
         cls,
         name: str,
         task: str,
-        yolo_root_dir: Union[str, Path],
         images_dir: Union[str, Path],
+        labels_dir: Optional[Union[str, Path]] = None,
+        yaml_file: Optional[Union[str, Path]] = None,
         root_dir: Optional[Union[str, Path]] = None,
     ) -> "Dataset":
         """
@@ -450,17 +451,31 @@ class Dataset:
             )
         ds.initialize()
 
-        if task == "object_detection":
-            # FIXME: get yolo txt dir from yolo root dir
-            # FIXME: get yolo yaml file from yolo root dir
+        if task == "classification":
+            if labels_dir is not None or yaml_file is not None:
+                raise ValueError(
+                    "Classification task does not require labels or YAML file"
+                )
+
+            # TODO: Implement classification task
+            pass
+
+        elif task == "object_detection":
+            # FIXME: get yolo txt dir from root dir
+            # FIXME: get yolo yaml file from root dir
+
+            if labels_dir is None or yaml_file is None:
+                raise ValueError(
+                    "Object detection task requires labels directory and YAML file"
+                )
 
             # Ensure yolo_txt_dir is a directory and convert it to a Path object
-            yolo_txt_dir = Path(yolo_txt_dir)
-            if not yolo_txt_dir.is_dir():
-                raise NotADirectoryError(f"{yolo_txt_dir} is not a directory.")
+            labels_dir = Path(labels_dir)
+            if not labels_dir.is_dir():
+                raise NotADirectoryError(f"{labels_dir} is not a directory.")
 
             annotation_id = 1
-            for yolo_txt_file in io.get_files_list(yolo_txt_dir):
+            for yolo_txt_file in io.get_files_list(labels_dir):
                 # Process images
                 image_id, image_width, image_height = _process_image(
                     ds, images_dir, yolo_txt_file
@@ -477,7 +492,7 @@ class Dataset:
                 )
 
             # Process categories
-            yolo_yaml = io.load_yaml(yolo_yaml_file)
+            yolo_yaml = io.load_yaml(yaml_file)
             category_id = 0
             for name in yolo_yaml["names"]:
                 category_id += 1
@@ -496,9 +511,6 @@ class Dataset:
             # Copy raw images to the dataset directory
             io.copy_files_to_directory(images_dir, ds.raw_image_dir)
 
-        elif task == "classification":
-            # TODO: Implement classification task
-            pass
         elif task == "segmentation":
             raise NotImplementedError(
                 "Segmentation task is not implemented yet."
