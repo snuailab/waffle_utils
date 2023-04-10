@@ -444,6 +444,9 @@ class Dataset:
         ds.initialize()
 
         if self.task == "object_detection":
+            # FIXME: get yolo txt dir from yolo root dir
+            # FIXME: get yolo yaml file from yolo root dir
+
             # Ensure yolo_txt_dir is a directory and convert it to a Path object
             yolo_txt_dir = Path(yolo_txt_dir)
             if not yolo_txt_dir.is_dir():
