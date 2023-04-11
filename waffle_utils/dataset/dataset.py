@@ -311,7 +311,7 @@ class Dataset:
 
         # function to process a single image
         def _process_image(
-            ds: "Dataset", images_dir: Path, yolo_txt_file: Path
+            ds: "Dataset", task: str, images_dir: Path, yolo_txt_file: Path
         ) -> Tuple[int, int, int]:
             """Processes an image file, adds it to the dataset, and returns its ID and dimensions.
 
@@ -323,31 +323,41 @@ class Dataset:
             Returns:
                 Tuple[int, int, int]: A tuple containing the image ID, width, and height.
             """
-            # Extract the image_id from the yolo_txt_file name
-            image_id = int(yolo_txt_file.stem)
 
-            # Find the image file with the same id in the images_dir
-            image_file_name = next(images_dir.glob(f"{image_id}.*")).name
-            ext = image_file_name.split(".")[-1]
-            image_file = images_dir / f"{image_id}.{ext}"
+            # Check task is valid
+            cls._validate_task(task)
 
-            # Load the image and get its dimensions
-            image_width, image_height = load_image(image_file).shape[:2]
+            if task == "classification":
+                # TODO: implement classification task
+                raise NotImplementedError(
+                    "Classification task is not yet implemented."
+                )
+            elif task == "detection":
+                # Extract the image_id from the yolo_txt_file name
+                image_id = int(yolo_txt_file.stem)
 
-            # Create an Image instance from the image data
-            image = Image.from_dict(
-                {
-                    "image_id": image_id,
-                    "file_name": f"{image_id}.{ext}",
-                    "width": image_width,
-                    "height": image_height,
-                }
-            )
+                # Find the image file with the same id in the images_dir
+                image_file_name = next(images_dir.glob(f"{image_id}.*")).name
+                ext = image_file_name.split(".")[-1]
+                image_file = images_dir / f"{image_id}.{ext}"
 
-            # Add the image to the dataset
-            ds.add_images([image])
+                # Load the image and get its dimensions
+                image_width, image_height = load_image(image_file).shape[:2]
 
-            return image_id, image_width, image_height
+                # Create an Image instance from the image data
+                image = Image.from_dict(
+                    {
+                        "image_id": image_id,
+                        "file_name": f"{image_id}.{ext}",
+                        "width": image_width,
+                        "height": image_height,
+                    }
+                )
+
+                # Add the image to the dataset
+                ds.add_images([image])
+
+                return image_id, image_width, image_height
 
         # function to process a single annotation file
         def _process_annotations(
@@ -452,17 +462,29 @@ class Dataset:
         ds.initialize()
 
         if task == "classification":
+            """
+            Used arguments: images_dir
+            """
+
             # Ensure labels_dir and yaml_file are None
             if labels_dir is not None or yaml_file is not None:
                 raise ValueError(
                     "Classification task does not require labels or YAML file"
                 )
 
-            # TODO: Implement classification task
-            pass
+            # TODO: Process images
+            _process_image(ds, task=task, images_dir)
+
+            # TODO: Process annotations
+
+            # TODO: Process categories
+
+            # TODO: Copy raw images to dataset directory
 
         elif task == "object_detection":
-
+            """
+            Used arguments: images_dir, labels_dir, yaml_file
+            """
             # Ensure labels_dir and yaml_file are not None
             if labels_dir is None or yaml_file is None:
                 raise ValueError(
