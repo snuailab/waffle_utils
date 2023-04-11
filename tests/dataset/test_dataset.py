@@ -190,7 +190,7 @@ def dataset(request, tmpdir: Path):
             ds = Dataset.from_yolo(
                 name="mnist_yolo_classification",
                 task="classification",
-                images_dir=Path(dummy_extract_dir / "images"),
+                images_dir=Path(dummy_extract_dir),
                 root_dir=tmpdir,
             )
         elif task == "object_detection":

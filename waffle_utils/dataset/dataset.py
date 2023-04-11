@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Optional, Tuple, Union
 
 import numpy as np
+from natsort import natsorted
 
 from waffle_utils.file import io
 from waffle_utils.image.io import load_image
@@ -311,10 +312,13 @@ class Dataset:
 
         # function to process a single image
         def _process_image(
-            ds: "Dataset", task: str, images_dir: Path, yolo_txt_file: Path
+            ds: "Dataset",
+            task: str,
+            images_dir: Path,
+            yolo_txt_file: Optional[Path] = None,
         ) -> Tuple[int, int, int]:
             """Processes an image file, adds it to the dataset, and returns its ID and dimensions.
-
+            # TODO: New docstring
             Args:
                 ds (Dataset): The Dataset object to add the image to.
                 images_dir (Path): The directory containing the image files.
@@ -327,11 +331,39 @@ class Dataset:
             # Check task is valid
             cls._validate_task(task)
 
+            # Get image file extension
+            ext = io.get_extension(images_dir)
+
             if task == "classification":
                 # TODO: implement classification task
-                raise NotImplementedError(
-                    "Classification task is not yet implemented."
-                )
+                if yolo_txt_file is not None:
+                    raise ValueError(
+                        "Classification task does not support yolo_txt_file."
+                    )
+
+                # Get file paths
+                file_paths = list(images_dir.glob(f"**/*.{ext}"))
+                file_paths = natsorted(file_paths, key=lambda path: path.name)
+
+                for image_file in file_paths:
+                    # Get file name from file path
+                    file_name = image_file.name
+                    image_id = int(file_name.split(".")[0])
+                    image_width, image_height = load_image(image_file).shape[
+                        :2
+                    ]
+                    image = Image.from_dict(
+                        {
+                            "image_id": image_id,
+                            "file_name": f"{file_name}",
+                            "width": image_width,
+                            "height": image_height,
+                        }
+                    )
+
+                    # Add the image to the dataset
+                    ds.add_images([image])
+
             elif task == "detection":
                 # Extract the image_id from the yolo_txt_file name
                 image_id = int(yolo_txt_file.stem)
@@ -472,8 +504,8 @@ class Dataset:
                     "Classification task does not require labels or YAML file"
                 )
 
-            # TODO: Process images
-            _process_image(ds, task=task, images_dir)
+            # TODO: get returns for the next process
+            _process_image(ds, task=task, images_dir=images_dir)
 
             # TODO: Process annotations
 
@@ -500,7 +532,10 @@ class Dataset:
             for yolo_txt_file in io.get_files_list(labels_dir):
                 # Process images
                 image_id, image_width, image_height = _process_image(
-                    ds, images_dir, yolo_txt_file
+                    ds,
+                    task=task,
+                    images_dir=images_dir,
+                    yolo_txt_file=yolo_txt_file,
                 )
 
                 # Process annotations
