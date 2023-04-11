@@ -109,7 +109,7 @@ class Dataset:
         return self.set_dir / Dataset.UNLABELED_SET_FILE_NAME
 
     @cached_property
-    def classes(self) -> list[str]:
+    def categories(self) -> list[str]:
         categories: list[Category] = self.get_categories()
         return [
             c.name for c in sorted(categories, key=lambda c: c.category_id)
