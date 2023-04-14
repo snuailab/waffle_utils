@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Union
+from typing import Tuple, Union
 
 import cv2
 
@@ -8,16 +8,41 @@ from waffle_utils.video import get_fourcc
 
 def create_video_capture(
     input_path: Union[str, Path]
-) -> list[cv2.VideoCapture, dict]:
+) -> Tuple[cv2.VideoCapture, dict]:
+    """
+    Create a VideoCapture object and retrieve video metadata.
 
+    This function opens a video file using OpenCV's VideoCapture class and retrieves
+    the video's frames per second, width, and height.
+
+    Args:
+        input_path (Union[str, Path]): The path to the input video file.
+
+    Returns:
+        Tuple[cv2.VideoCapture, dict]: A tuple containing the VideoCapture object
+                                       and a dictionary with the video metadata.
+
+    Raises:
+        ValueError: If the video file cannot be opened.
+    """
+
+    # Create a VideoCapture object using the input path
     cap = cv2.VideoCapture(str(input_path))
+
+    # Check if the video file was opened successfully
+    if not cap.isOpened():
+        raise ValueError(f"Failed to open the video file at {input_path}. Check the input path.")
+
+    # Retrieve the video metadata (fps, width, height)
     meta = {
         "fps": cap.get(cv2.CAP_PROP_FPS),
         "width": cap.get(cv2.CAP_PROP_FRAME_WIDTH),
         "height": cap.get(cv2.CAP_PROP_FRAME_HEIGHT),
     }
 
+    # Return the VideoCapture object and the metadata
     return cap, meta
+
 
 
 def create_video_writer(

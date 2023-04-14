@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
 from waffle_utils.file.io import make_directory
 from waffle_utils.file.search import get_image_files
@@ -19,20 +19,12 @@ DEFAULT_FRAME_RATE = 30
 def extract_frames(
     input_path: Union[str, Path],
     output_dir: Union[str, Path],
-    frame_rate: int = DEFAULT_FRAME_RATE,
+    num_of_frames: Optional[int] = None,
+    distance_between_frames: Optional[float] = None,
     output_image_extension: str = DEFAULT_IMAGE_EXTENSION,
     verbose: bool = False,
 ) -> None:
-    f"""
-    Extracts frames as individual images from a video file.
 
-    Args:
-        input_path (Union[str, Path]): Path to the input video file.
-        output_dir (Union[str, Path]): Path to the output directory where the frame images will be saved.
-        frame_rate (int, optional): Frame rate of the output images. Defaults to {DEFAULT_FRAME_RATE}.
-        output_image_extension (str, optional): Extension of the output frame images. Defaults to {DEFAULT_IMAGE_EXTENSION}.
-        verbose (bool, optional): Whether to print verbose output. Defaults to False.
-    """
     # Convert input_path and output_dir to Path objects
     input_path = Path(input_path)
     output_dir = Path(output_dir)
@@ -51,9 +43,10 @@ def extract_frames(
     # Extract frames from the video file
     video_capture, meta = create_video_capture(input_path)
 
-    fps = meta["fps"]
-    frame_interval = int(round(fps / frame_rate))
+    # Calculate the frame interval(second) based on the distance between frames and the video's FPS
+    frame_interval_second = distance_between_frames
 
+    # Save frames as images
     count = 0
     while True:
         success, image = video_capture.read()
@@ -61,18 +54,17 @@ def extract_frames(
             break
 
         # Only extract frames at the specified frame rate
-        if count % frame_interval == 0:
-            output_path = output_dir / f"{count}.{output_image_extension}"
-            save_image(output_path, image)
-
+        if count % frame_interval_second == 0:
             if verbose:
-                logger.info(f"{input_path} ({count}) -> {output_path}.")
+                logger.info(f"{input_path} -> {output_dir}/frame_{count}.{output_image_extension}")
+            save_image(image, output_dir / f"frame_{count}.{output_image_extension}")
 
         count += 1
 
     # Release the video capture
     video_capture.release()
     logger.info(f"Output: {output_dir}/")
+
 
 
 def create_video(

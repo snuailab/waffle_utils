@@ -117,7 +117,8 @@ verbose_docs = "Verbose"
 def _extract_frames(
     input_path: str = typer.Option(..., help=input_video_path_docs),
     output_dir: str = typer.Option(..., help=output_frames_dir_docs),
-    frame_rate: int = typer.Option(DEFAULT_FRAME_RATE, help=frame_rate_docs),
+    num_of_frames: int = typer.Option(None, help="Number of frames to extract"),
+    distance_between_frames: float = typer.Option(None, help="Distance between frames(second)"),
     output_image_extension: str = typer.Option(
         DEFAULT_IMAGE_EXTENSION, help=output_image_extension_docs
     ),
@@ -125,7 +126,7 @@ def _extract_frames(
 ):
     """Extract Frames from a Video File"""
 
-    extract_frames(input_path, output_dir, frame_rate, output_image_extension, verbose)
+    extract_frames(input_path, output_dir, num_of_frames, distance_between_frames, output_image_extension, verbose)
 
 
 @app.command(name="create_video")
