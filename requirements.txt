@@ -5,3 +5,4 @@ PyYAML==6.0
 typer[all]
 rich
 opencv-python
+matplotlib
