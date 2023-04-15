@@ -6,3 +6,4 @@ typer[all]
 rich
 opencv-python
 matplotlib
+imageio
