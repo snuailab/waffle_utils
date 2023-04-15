@@ -135,5 +135,4 @@ dmypy.json
 tmp/
 datasets/
 debug.py
-_projects
-_scripts
+
