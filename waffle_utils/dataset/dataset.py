@@ -108,6 +108,13 @@ class Dataset:
     def unlabeled_set_file(self) -> Path:
         return self.set_dir / Dataset.UNLABELED_SET_FILE_NAME
 
+    @cached_property
+    def categories(self) -> list[str]:
+        categories: list[Category] = self.get_categories()
+        return [
+            c.name for c in sorted(categories, key=lambda c: c.category_id)
+        ]
+
     # factories
     @classmethod
     def new(cls, name: str, root_dir: str = None) -> "Dataset":

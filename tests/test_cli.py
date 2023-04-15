@@ -48,18 +48,18 @@ def dataset_name():
 
 @pytest.fixture(scope="module")
 def coco_root_dir(extract_dir):
-    return extract_dir / "raw"
+    return extract_dir / "images"
 
 
 @pytest.fixture(scope="module")
 def coco_file(extract_dir):
-    return extract_dir / "exports/coco.json"
+    return extract_dir / "coco.json"
 
 
 # Define tests for dataset-related functions
 def test_get_file_from_url(zip_file):
     run(
-        f"python -m waffle_utils.run get_file_from_url --url https://github.com/snuailab/waffle_utils/raw/main/mnist.zip --file-path {zip_file}"
+        f"python -m waffle_utils.run get_file_from_url --url https://raw.githubusercontent.com/snuailab/assets/main/waffle/sample_dataset/mnist.zip --file-path {zip_file}"
     )
 
 
