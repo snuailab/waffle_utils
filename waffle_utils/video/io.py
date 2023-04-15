@@ -34,11 +34,18 @@ def create_video_capture(
         raise ValueError(f"Failed to open the video file at {input_path}. Check the input path.")
 
     # Retrieve the video metadata (fps, width, height)
-    video_reader = imageio.get_reader(str(input_path))
-    video_meta = video_reader.get_meta_data()
+    ext = Path(input_path).suffix[1:]
+    if ext == "mkv":
+        # Use imageio to retrieve the video metadata for mkv files
+        # (OpenCV has a bug that causes it to return incorrect metadata for mkv files)
+        video_reader = imageio.get_reader(str(input_path))
+        video_meta = video_reader.get_meta_data()
+        fps = video_meta['fps']
+    else:
+        fps = cap.get(cv2.CAP_PROP_FPS)
 
     meta = {
-        "fps": video_meta['fps'],
+        "fps": fps,
         "width": cap.get(cv2.CAP_PROP_FRAME_WIDTH),
         "height": cap.get(cv2.CAP_PROP_FRAME_HEIGHT),
     }
