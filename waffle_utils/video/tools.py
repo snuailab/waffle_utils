@@ -6,7 +6,7 @@ from waffle_utils.file.io import make_directory
 from waffle_utils.file.search import get_image_files
 from waffle_utils.image import (
     DEFAULT_IMAGE_EXTENSION,
-    SUPPORTED_IMAGE_EXTENSION,
+    SUPPORTED_IMAGE_EXTENSIONS,
 )
 from waffle_utils.image.io import load_image, save_image
 from waffle_utils.video.io import create_video_capture, create_video_writer
@@ -20,20 +20,34 @@ def extract_frames(
     input_path: Union[str, Path],
     output_dir: Union[str, Path],
     num_of_frames: Optional[int] = None,
-    distance_between_frames: Optional[float] = None,
+    interval_second: Optional[float] = None,
     output_image_extension: str = DEFAULT_IMAGE_EXTENSION,
     verbose: bool = False,
 ) -> None:
+    f"""
+    Extract frames from a video file at specified time intervals and save them as images.
+
+    Args:
+        input_path: The path to the input video file.
+        output_dir: The directory where the extracted frames will be saved.
+        num_of_frames: The number of frames to extract (optional). If not specified, all frames at the specified intervals will be extracted.
+        interval_second: The time interval in seconds between extracted frames (optional). If not specified, all frames will be extracted.
+        output_image_extension: The file extension for the output images (default: {DEFAULT_IMAGE_EXTENSION}).
+        verbose: If True, print progress information (default: False).
+
+    Raises:
+        ValueError: If the output image extension is not supported.
+    """
 
     # Convert input_path and output_dir to Path objects
     input_path = Path(input_path)
     output_dir = Path(output_dir)
 
     # Check if the output image extension is supported
-    if output_image_extension not in SUPPORTED_IMAGE_EXTENSION:
+    if output_image_extension not in SUPPORTED_IMAGE_EXTENSIONS:
         raise ValueError(
             f"Invalid output_image_extension: {output_image_extension}.\n"
-            f"Must be one of {SUPPORTED_IMAGE_EXTENSION}."
+            f"Must be one of {SUPPORTED_IMAGE_EXTENSIONS}."
         )
 
     # Create output directory if it doesn't exist
@@ -43,28 +57,33 @@ def extract_frames(
     # Extract frames from the video file
     video_capture, meta = create_video_capture(input_path)
 
-    # Calculate the frame interval(second) based on the distance between frames and the video's FPS
-    frame_interval_second = distance_between_frames
+    # Carculate frame interval
+    frame_interval = int(meta["fps"]*interval_second) if interval_second else 1
 
     # Save frames as images
     count = 0
+    extracted_frames = 0
     while True:
         success, image = video_capture.read()
         if not success:
             break
 
         # Only extract frames at the specified frame rate
-        if count % frame_interval_second == 0:
+        if count % frame_interval == 0:
             if verbose:
                 logger.info(f"{input_path} -> {output_dir}/frame_{count}.{output_image_extension}")
-            save_image(image, output_dir / f"frame_{count}.{output_image_extension}")
+            save_image(output_dir / f"frame_{count}.{output_image_extension}", image)
+            extracted_frames += 1
+
+            # Stop extracting frames if the specified number of frames is reached
+            if num_of_frames is not None and extracted_frames >= num_of_frames:
+                break
 
         count += 1
 
     # Release the video capture
     video_capture.release()
     logger.info(f"Output: {output_dir}/")
-
 
 
 def create_video(

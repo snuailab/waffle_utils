@@ -3,7 +3,7 @@ from typing import List, Optional, Union
 
 from natsort import natsorted
 
-from waffle_utils.image import SUPPORTED_IMAGE_EXTENSION
+from waffle_utils.image import SUPPORTED_IMAGE_EXTENSIONS
 from waffle_utils.video import SUPPORTED_VIDEO_EXTENSION
 
 
@@ -45,7 +45,7 @@ def get_image_files(directory: Union[str, Path]) -> list:
     Returns:
         list: List of image file paths.
     """
-    return get_files(directory, SUPPORTED_IMAGE_EXTENSION)
+    return get_files(directory, SUPPORTED_IMAGE_EXTENSIONS)
 
 
 def get_video_files(directory: Union[str, Path]) -> list:

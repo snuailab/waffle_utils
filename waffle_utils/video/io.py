@@ -2,9 +2,9 @@ from pathlib import Path
 from typing import Tuple, Union
 
 import cv2
+import imageio
 
 from waffle_utils.video import get_fourcc
-
 
 def create_video_capture(
     input_path: Union[str, Path]
@@ -34,15 +34,17 @@ def create_video_capture(
         raise ValueError(f"Failed to open the video file at {input_path}. Check the input path.")
 
     # Retrieve the video metadata (fps, width, height)
+    video_reader = imageio.get_reader(str(input_path))
+    video_meta = video_reader.get_meta_data()
+
     meta = {
-        "fps": cap.get(cv2.CAP_PROP_FPS),
+        "fps": video_meta['fps'],
         "width": cap.get(cv2.CAP_PROP_FRAME_WIDTH),
         "height": cap.get(cv2.CAP_PROP_FRAME_HEIGHT),
     }
 
     # Return the VideoCapture object and the metadata
     return cap, meta
-
 
 
 def create_video_writer(
