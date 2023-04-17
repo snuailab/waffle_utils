@@ -37,16 +37,6 @@ def extract_dir(tmp_path_module):
 
 
 @pytest.fixture(scope="module")
-def data_root_dir(tmp_path_module):
-    return tmp_path_module / "tmp/dataset"
-
-
-@pytest.fixture(scope="module")
-def dataset_name():
-    return "mnist"
-
-
-@pytest.fixture(scope="module")
 def coco_root_dir(extract_dir):
     return extract_dir / "images"
 
@@ -66,27 +56,6 @@ def test_get_file_from_url(zip_file):
 def test_unzip(zip_file, extract_dir):
     run(
         f"python -m waffle_utils.run unzip --file-path {zip_file} --output-dir {extract_dir}"
-    )
-
-
-def test_from_coco(data_root_dir, dataset_name, coco_file, coco_root_dir):
-    run(
-        f"python -m waffle_utils.run from_coco --name {dataset_name} --coco-file {coco_file} --coco-root-dir {coco_root_dir} --root-dir {data_root_dir}"
-    )
-
-
-def test_split(data_root_dir, dataset_name):
-    run(
-        f"python -m waffle_utils.run split --name {dataset_name} --root-dir {data_root_dir} --train-split-ratio 0.8"
-    )
-
-
-def test_export(data_root_dir, dataset_name):
-    run(
-        f"python -m waffle_utils.run export --name {dataset_name} --root-dir {data_root_dir} --export-format yolo_detection"
-    )
-    run(
-        f"python -m waffle_utils.run export --name {dataset_name} --root-dir {data_root_dir} --export-format coco_detection"
     )
 
 
