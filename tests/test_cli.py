@@ -114,7 +114,7 @@ def output_path(tmp_path_module):
 # Define tests for video-related functions
 def test_extract_frames(input_path, output_dir):
     run(
-        f"python -m waffle_utils.run extract_frames --input-path {input_path} --output-dir {output_dir} --frame-rate 30  --output-image-extension {DEFAULT_IMAGE_EXTENSION}"
+        f"python -m waffle_utils.run extract_frames --input-path {input_path} --output-dir {output_dir} --num-of-frames 3 --interval-second 3 --output-image-extension {DEFAULT_IMAGE_EXTENSION}"
     )
 
 

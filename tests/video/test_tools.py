@@ -20,7 +20,8 @@ def test_tools(tmpdir: Path):
     extract_frames(
         input_path_copy,
         tmpdir,
-        frame_rate=30,
+        num_of_frames=3,
+        interval_second=3,
         output_image_extension=image_extension,
         verbose=True,
     )

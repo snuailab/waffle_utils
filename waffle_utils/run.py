@@ -6,7 +6,7 @@ from waffle_utils.dataset import Dataset
 from waffle_utils.dataset.format import Format
 from waffle_utils.file.io import unzip
 from waffle_utils.file.network import get_file_from_url
-from waffle_utils.image import DEFAULT_IMAGE_EXTENSION, SUPPORTED_IMAGE_EXTENSION
+from waffle_utils.image import DEFAULT_IMAGE_EXTENSION, SUPPORTED_IMAGE_EXTENSIONS
 from waffle_utils.video import SUPPORTED_VIDEO_EXTENSION
 from waffle_utils.video.tools import DEFAULT_FRAME_RATE, create_video, extract_frames
 
@@ -109,7 +109,7 @@ input_frames_dir_docs = "Directory to input frame image files"
 output_frames_dir_docs = "Directory to output frame image files"
 output_video_path_docs = f"Path for output video file. Example: path/to/video.mp4. Supported extensions: {SUPPORTED_VIDEO_EXTENSION}"
 frame_rate_docs = "Frame rate"
-output_image_extension_docs = f"Output image extension. {SUPPORTED_IMAGE_EXTENSION}"
+output_image_extension_docs = f"Output image extension. {SUPPORTED_IMAGE_EXTENSIONS}"
 verbose_docs = "Verbose"
 
 
@@ -117,7 +117,8 @@ verbose_docs = "Verbose"
 def _extract_frames(
     input_path: str = typer.Option(..., help=input_video_path_docs),
     output_dir: str = typer.Option(..., help=output_frames_dir_docs),
-    frame_rate: int = typer.Option(DEFAULT_FRAME_RATE, help=frame_rate_docs),
+    num_of_frames: int = typer.Option(None, help="Number of frames to extract"),
+    interval_second: float = typer.Option(None, help="Distance between frames(second)"),
     output_image_extension: str = typer.Option(
         DEFAULT_IMAGE_EXTENSION, help=output_image_extension_docs
     ),
@@ -125,7 +126,7 @@ def _extract_frames(
 ):
     """Extract Frames from a Video File"""
 
-    extract_frames(input_path, output_dir, frame_rate, output_image_extension, verbose)
+    extract_frames(input_path, output_dir, num_of_frames, interval_second, output_image_extension, verbose)
 
 
 @app.command(name="create_video")
