@@ -11,8 +11,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
-        python-version: ['3.9', '3.10', '3.11']
+        os: [ubuntu-latest, windows-latest]
+        python-version: ['3.9', '3.10']
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
@@ -41,4 +41,4 @@ jobs:
           pip list
       - name: Pytest tests
         shell: bash  # for Windows compatibility
-        run: python -m pytest tests -v
+        run: python -m pytest tests
