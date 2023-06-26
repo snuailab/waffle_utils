@@ -8,40 +8,43 @@ colors = np.random.rand(1000, 3)
 
 
 def _plot_scatter_1d(
-    datas: np.ndarray, categories: np.ndarray, ax: plt.Axes
+    datas: np.ndarray, categories: np.ndarray, num_category: int, ax: plt.Axes
 ) -> plt.Axes:
-    for i in range(len(np.unique(categories))):
+    for i in range(num_category):
+        idx = categories == i
         ax.scatter(
-            datas[categories == i],
-            np.zeros_like(datas[categories == i]),
+            datas[idx],
+            np.zeros_like(datas[idx]),
             color=colors[i],
         )
     return ax
 
 
 def _plot_scatter_2d(
-    datas: np.ndarray, categories: np.ndarray, ax: plt.Axes
+    datas: np.ndarray, categories: np.ndarray, num_category: int, ax: plt.Axes
 ) -> plt.Axes:
-    for i in range(len(np.unique(categories))):
+    for i in range(num_category):
+        idx = categories == i
         ax.scatter(
-            datas[categories == i, 0],
-            datas[categories == i, 1],
+            datas[idx, 0],
+            datas[idx, 1],
             color=colors[i],
         )
     return ax
 
 
 def _plot_scatter_3d(
-    datas: np.ndarray, categories: np.ndarray, ax: plt.Axes
+    datas: np.ndarray, categories: np.ndarray, num_category: int, ax: plt.Axes
 ) -> plt.Axes:
     x = datas[:, 0]
     y = datas[:, 1]
     z = datas[:, 2]
-    for i in range(len(np.unique(categories))):
+    for i in range(num_category):
+        idx = categories == i
         ax.scatter(
-            x[categories == i],
-            y[categories == i],
-            z[categories == i],
+            x[idx],
+            y[idx],
+            z[idx],
             color=colors[i],
         )
     return ax
@@ -129,6 +132,8 @@ def plot(
     elif plot_type == "scatter":
         num_samples = datas.shape[0]
         num_dimensions = datas.shape[1]
+        if names is None:
+            names = [str(i) for i in range(max(categories) + 1)]
 
     if categories is None:
         categories = np.zeros(num_samples, dtype=int)
@@ -171,11 +176,11 @@ def plot(
         if ax is None:
             ax = plt.axes(projection="3d" if num_dimensions == 3 else None)
         if datas.shape[1] == 1:
-            ax = _plot_scatter_1d(datas, categories, ax)
+            ax = _plot_scatter_1d(datas, categories, len(names), ax)
         elif datas.shape[1] == 2:
-            ax = _plot_scatter_2d(datas, categories, ax)
+            ax = _plot_scatter_2d(datas, categories, len(names), ax)
         elif datas.shape[1] == 3:
-            ax = _plot_scatter_3d(datas, categories, ax)
+            ax = _plot_scatter_3d(datas, categories, len(names), ax)
         else:
             raise NotImplementedError(
                 f"datas shape {datas.shape} is not supported"
