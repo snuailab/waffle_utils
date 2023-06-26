@@ -10,7 +10,7 @@ colors = np.random.rand(1000, 3)
 def _plot_scatter_1d(
     datas: np.ndarray, categories: np.ndarray, ax: plt.Axes
 ) -> plt.Axes:
-    for i in range(len(np.unique(categories))):
+    for i in range(max(categories) + 1):
         ax.scatter(
             datas[categories == i],
             np.zeros_like(datas[categories == i]),
@@ -22,10 +22,11 @@ def _plot_scatter_1d(
 def _plot_scatter_2d(
     datas: np.ndarray, categories: np.ndarray, ax: plt.Axes
 ) -> plt.Axes:
-    for i in range(len(np.unique(categories))):
+    for i in range(max(categories) + 1):
+        idx = categories == i
         ax.scatter(
-            datas[categories == i, 0],
-            datas[categories == i, 1],
+            datas[idx, 0],
+            datas[idx, 1],
             color=colors[i],
         )
     return ax
@@ -37,11 +38,12 @@ def _plot_scatter_3d(
     x = datas[:, 0]
     y = datas[:, 1]
     z = datas[:, 2]
-    for i in range(len(np.unique(categories))):
+    for i in range(max(categories) + 1):
+        idx = categories == i
         ax.scatter(
-            x[categories == i],
-            y[categories == i],
-            z[categories == i],
+            x[idx],
+            y[idx],
+            z[idx],
             color=colors[i],
         )
     return ax
