@@ -132,6 +132,8 @@ def plot(
     elif plot_type == "scatter":
         num_samples = datas.shape[0]
         num_dimensions = datas.shape[1]
+        if names is None:
+            names = [str(i) for i in range(max(categories) + 1)]
 
     if categories is None:
         categories = np.zeros(num_samples, dtype=int)

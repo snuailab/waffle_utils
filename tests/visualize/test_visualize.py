@@ -26,13 +26,14 @@ def categories():
 
 
 def test_plot_scatter(embedding_1d, embedding_2d, embedding_3d, categories):
-    plot_scatter(
+    ax = plot_scatter(
         datas=embedding_1d,
         categories=categories,
         names=None,
         title=None,
         xlabel=None,
     )
+    assert len(ax.get_legend().get_texts()) == categories.max() + 1
 
     plot_scatter(
         datas=embedding_2d,
@@ -41,6 +42,7 @@ def test_plot_scatter(embedding_1d, embedding_2d, embedding_3d, categories):
         title=None,
         xlabel=None,
     )
+    assert len(ax.get_legend().get_texts()) == categories.max() + 1
 
     plot_scatter(
         datas=embedding_3d,
@@ -49,6 +51,7 @@ def test_plot_scatter(embedding_1d, embedding_2d, embedding_3d, categories):
         title=None,
         xlabel=None,
     )
+    assert len(ax.get_legend().get_texts()) == categories.max() + 1
 
 
 def test_plot_bar(embedding_1d, embedding_2d, embedding_3d, categories):
