@@ -203,16 +203,19 @@ def zip(src: Union[str, list], dst: str):
     with zipfile.ZipFile(dst, "w") as f:
         for file_path in file_list:
             if os.path.isdir(file_path):
-                pwd_temp = os.getcwd()
-                os.chdir(file_path)
                 for path, dir, files in os.walk(file_path):
                     for file in files:
+                        arcname = os.path.join(
+                            os.path.relpath(path, file_path), file
+                        )
                         f.write(
-                            os.path.join(
-                                os.path.relpath(path, file_path), file
-                            ),
+                            os.path.join(path, file),
+                            arcname=arcname,
                             compress_type=zipfile.ZIP_DEFLATED,
                         )
-                os.chdir(pwd_temp)
             else:
-                f.write(file_path, compress_type=zipfile.ZIP_DEFLATED)
+                f.write(
+                    file_path,
+                    arcname=os.path.basename(file_path),
+                    compress_type=zipfile.ZIP_DEFLATED,
+                )
