@@ -200,23 +200,30 @@ def unzip(src: str, dst: str, create_directory: bool = False):
 
 def zip(src: Union[str, list], dst: str):
     file_list = [src] if isinstance(src, str) else src
-    with zipfile.ZipFile(dst, "w") as f:
-        for file_path in file_list:
-            if os.path.isdir(file_path):
-                for path, dir, files in os.walk(file_path):
-                    for file in files:
-                        arcname = os.path.join(
-                            os.path.relpath(path, os.path.dirname(file_path)),
-                            file,
-                        )
-                        f.write(
-                            os.path.join(path, file),
-                            arcname=arcname,
-                            compress_type=zipfile.ZIP_DEFLATED,
-                        )
-            else:
-                f.write(
-                    file_path,
-                    arcname=os.path.basename(file_path),
-                    compress_type=zipfile.ZIP_DEFLATED,
-                )
+    try:
+        with zipfile.ZipFile(dst, "w") as f:
+            for file_path in file_list:
+                if os.path.isdir(file_path):
+                    for path, dir, files in os.walk(file_path):
+                        for file in files:
+                            arcname = os.path.join(
+                                os.path.relpath(
+                                    path, os.path.dirname(file_path)
+                                ),
+                                file,
+                            )
+                            f.write(
+                                os.path.join(path, file),
+                                arcname=arcname,
+                                compress_type=zipfile.ZIP_DEFLATED,
+                            )
+                else:
+                    f.write(
+                        file_path,
+                        arcname=os.path.basename(file_path),
+                        compress_type=zipfile.ZIP_DEFLATED,
+                    )
+    except Exception as e:
+        if os.path.exists(dst):
+            remove_file(dst)
+        raise e
