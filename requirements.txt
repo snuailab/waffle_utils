@@ -5,5 +5,5 @@ PyYAML==6.0
 typer[all]
 rich
 opencv-python
-matplotlib
+matplotlib<=3.7.2
 imageio
