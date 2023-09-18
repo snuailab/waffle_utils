@@ -132,7 +132,7 @@ dmypy.json
 .vscode/
 
 # custom
-tmp/
+tmp*
 datasets/
 debug.py
 

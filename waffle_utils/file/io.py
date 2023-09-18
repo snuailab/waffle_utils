@@ -206,7 +206,8 @@ def zip(src: Union[str, list], dst: str):
                 for path, dir, files in os.walk(file_path):
                     for file in files:
                         arcname = os.path.join(
-                            os.path.relpath(path, file_path), file
+                            os.path.relpath(path, os.path.dirname(file_path)),
+                            file,
                         )
                         f.write(
                             os.path.join(path, file),
