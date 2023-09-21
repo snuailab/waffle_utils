@@ -7,13 +7,19 @@ def test_io():
     dummy_data = {"dummy": "hi"}
     dummy_json = os.path.join("tmp", "a.json")
     dummy_yaml = os.path.join("tmp", "a.yaml")
-
+    dummy_txt = ["dummy", "space test", "dummy"]
     dummy_src = "tmp"
     dummy_dst = "tmp_copy"
+    dummy_txt_file = "tmp_txt"
 
     io.save_json(dummy_data, dummy_json, create_directory=True)
     io.save_yaml(dummy_data, dummy_yaml, create_directory=True)
     assert io.load_json(dummy_json) == io.load_yaml(dummy_yaml)
+
+    # txt test
+    io.save_txt(dummy_txt, dummy_txt_file)
+    assert os.path.exists(dummy_txt_file)
+    assert io.load_txt(dummy_txt_file) == dummy_txt
 
     io.copy_files_to_directory(dummy_src, dummy_dst, create_directory=True)
 

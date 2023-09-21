@@ -3,7 +3,7 @@ import os
 import shutil
 import zipfile
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, Union, List
 
 import yaml
 
@@ -227,3 +227,42 @@ def zip(src: Union[str, list], dst: str):
         if os.path.exists(dst):
             remove_file(dst)
         raise e
+
+def save_txt(txt_list: List[str], fp: Union[str, Path], create_directory: bool = False):
+    """save txt file
+
+    Args:
+        txt_list (List[str]): str list to save
+        fp (Union[str, Path]): file path.
+        create_directory (bool, optional): this determines whether create parent directory or not. Default to False.
+    """
+
+    fp = Path(fp)
+    if create_directory:
+        make_directory(fp.parent)
+    
+    with open(fp, "w") as f:
+        f.write("\n".join(txt_list))
+
+
+def load_txt(fp: Union[str, Path]) -> list:
+    """load txt file
+
+    Args:
+        fp (Union[str, Path]): file path.
+
+    Returns:
+        list: List[str]
+    """
+
+    fp = Path(fp)
+
+    if not fp.exists():
+        raise FileNotFoundError(f"{fp} does not exists")
+    
+    with open(fp, "r") as f:
+        lines = f.readlines()
+
+    lines = [line.strip() for line in lines]
+    
+    return lines
