@@ -2,7 +2,7 @@ import json
 import os
 import shutil
 import zipfile
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import Any, Union
 
 import yaml
@@ -88,6 +88,8 @@ def copy_files_to_directory(
     src: Union[list, str, Path],
     dst: Union[str, Path],
     create_directory: bool = False,
+    recursive: bool = True,
+    exts: Union[str, list] = None,
 ):
     """Copy files to directory
 
@@ -95,6 +97,8 @@ def copy_files_to_directory(
         src (Union[list, str, Path]): 'file list' or 'file' or 'directory'.
         dst (Union[str, Path]): destination directory.
         create_directory (bool, optional): create destination directory or not. Defaults to False.
+        recursive (bool, optional): copy recursively or not when copying directory. Defaults to True.
+        exts (Union[str, list], optional): copy only specific extension(including "."). Defaults to None.
 
     Raises:
         FileNotFoundError: if src is unknown
@@ -106,15 +110,17 @@ def copy_files_to_directory(
     if isinstance(src, list):
         src_prefix = os.path.commonpath(src)
         src_list = list(map(Path, src))
-    elif isinstance(src, str) or isinstance(src, Path):
+    elif isinstance(src, (str, PurePath)):
         src = Path(src)
         if src.is_file():
-            src = Path(src)
             src_list = [src]
             src_prefix = src.parent
         elif src.is_dir():
-            src = Path(src)
-            src_list = src.glob("**/*")
+            src_list = list(src.glob("**/*" if recursive else "*"))
+            if exts:
+                if isinstance(exts, str):
+                    exts = [exts]
+                src_list = list(filter(lambda x: x.suffix in exts, src_list))
             src_prefix = src
 
     if src_list is None:
@@ -180,16 +186,82 @@ def remove_file(src: str):
     os.remove(src)
 
 
-def remove_directory(src: Union[str, Path]):
+def remove_directory(src: Union[str, Path], recursive: bool = False):
     """Remove Directory
 
     Args:
         src (str): file to remove
+        recursive (bool, optional): remove recursively. Defaults to False.
     """
-    shutil.rmtree(str(src))
+    if not recursive:
+        if Path(src).glob("**/*"):
+            raise FileExistsError(
+                f"{src} is not empty. please set recursive argument to be True to remove directory."
+            )
+    shutil.rmtree(src)
 
 
-def unzip(src: str, dst: str, create_directory: bool = False):
+def zip(
+    src: Union[str, PurePath, list], dst: str, create_directory: bool = False
+) -> str:
+    """Zip file(s) or directory(s)
+
+    Args:
+        src (Union[str, PurePath, list]): file(s) or directory(s)
+        dst (str): destination file path
+        create_directory (bool, optional): create destination directory or not. Defaults to False.
+
+    Returns:
+        str: destination file path
+    """
+
+    def parse_path(src: Union[str, PurePath]) -> tuple[Path, list]:
+        if Path(src).is_file():
+            base_dir = Path(src).parent
+            file_list = [Path(src)]
+        elif Path(src).is_dir():
+            base_dir = Path(src)
+            file_list = list(Path(src).glob("**/*"))
+        else:
+            raise FileNotFoundError(f"{src} does not exists")
+        return base_dir, file_list
+
+    if isinstance(src, (str, PurePath)):
+        base_dir, file_list = parse_path(src)
+    elif isinstance(src, list):
+        src = list(map(lambda x: Path(x).absolute(), src))
+        base_dir = Path(os.path.commonpath(src))
+        file_list = []
+        for file_path in src:
+            _, _file_list = parse_path(file_path)
+            file_list.extend(_file_list)
+
+    if create_directory:
+        make_directory(Path(dst).parent)
+
+    with zipfile.ZipFile(dst, "w") as f:
+        for file_path in file_list:
+            arcname = str(file_path.relative_to(base_dir))
+            f.write(
+                file_path,
+                arcname=arcname,
+                compress_type=zipfile.ZIP_DEFLATED,
+            )
+
+    return str(dst)
+
+
+def unzip(src: str, dst: str, create_directory: bool = False) -> str:
+    """Unzip file
+
+    Args:
+        src (str): source file path
+        dst (str): destination directory
+        create_directory (bool, optional): create destination directory or not. Defaults to False.
+
+    Returns:
+        str: destination directory
+    """
 
     if create_directory:
         make_directory(dst)
@@ -197,33 +269,4 @@ def unzip(src: str, dst: str, create_directory: bool = False):
     with zipfile.ZipFile(src, "r") as f:
         f.extractall(dst)
 
-
-def zip(src: Union[str, list], dst: str):
-    file_list = [src] if isinstance(src, str) else src
-    try:
-        with zipfile.ZipFile(dst, "w") as f:
-            for file_path in file_list:
-                if os.path.isdir(file_path):
-                    for path, dir, files in os.walk(file_path):
-                        for file in files:
-                            arcname = os.path.join(
-                                os.path.relpath(
-                                    path, os.path.dirname(file_path)
-                                ),
-                                file,
-                            )
-                            f.write(
-                                os.path.join(path, file),
-                                arcname=arcname,
-                                compress_type=zipfile.ZIP_DEFLATED,
-                            )
-                else:
-                    f.write(
-                        file_path,
-                        arcname=os.path.basename(file_path),
-                        compress_type=zipfile.ZIP_DEFLATED,
-                    )
-    except Exception as e:
-        if os.path.exists(dst):
-            remove_file(dst)
-        raise e
+    return str(dst)
