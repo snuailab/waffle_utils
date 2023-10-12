@@ -44,7 +44,9 @@ def test_load_yaml(
     assert io.load_yaml(fp) == data
 
 
-def test_copy_files_to_directory(dummy_directory, tmpdir):
+def test_copy_files_to_directory(
+    dummy_directory, dummy_directory_clone, tmpdir
+):
     # copy directory without create_directory
     src = dummy_directory["path"]
     dst = Path(tmpdir, "test1")
@@ -58,6 +60,7 @@ def test_copy_files_to_directory(dummy_directory, tmpdir):
     dst = Path(tmpdir, "test2")
 
     io.copy_files_to_directory(src, dst, create_directory=True)
+    assert len(list(dst.glob("**/*"))) == 1
 
     # copy without recursive
     src = dummy_directory["path"]
@@ -82,14 +85,24 @@ def test_copy_files_to_directory(dummy_directory, tmpdir):
     dst = Path(tmpdir, "test5")
 
     io.copy_files_to_directory(
-        src, dst, create_directory=True, recursive=False, exts=".txt"
+        src, dst, create_directory=True, recursive=False, extension=".txt"
     )
     assert len(list(filter(lambda x: x.is_file(), dst.glob("**/*")))) == 1
 
     io.copy_files_to_directory(
-        src, dst, create_directory=True, recursive=True, exts=".txt"
+        src, dst, create_directory=True, recursive=True, extension=".txt"
     )
     assert len(list(filter(lambda x: x.is_file(), dst.glob("**/*")))) == 2
+
+    # copy file and directory to directory
+    src = dummy_directory["file_list"] + [dummy_directory_clone["path"]]
+    dst = Path(tmpdir, "test6")
+
+    io.copy_files_to_directory(src, dst, create_directory=True, recursive=True)
+    assert (
+        len(list(filter(lambda x: x.is_file(), dst.glob("**/*"))))
+        == dummy_directory["length"] + dummy_directory_clone["length"]
+    )
 
 
 def test_copy_file(dummy_text, tmpdir):

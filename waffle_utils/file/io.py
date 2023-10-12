@@ -7,6 +7,8 @@ from typing import Any, Union
 
 import yaml
 
+from waffle_utils.file import search
+
 
 def save_json(obj: Any, fp: Union[str, Path], create_directory: bool = False):
     """save json file
@@ -85,53 +87,57 @@ def load_yaml(fp: Union[str, Path]) -> dict:
 
 
 def copy_files_to_directory(
-    src: Union[list, str, Path],
-    dst: Union[str, Path],
-    create_directory: bool = False,
+    src: Union[list, str, PurePath],
+    dst: Union[str, PurePath],
     recursive: bool = True,
-    exts: Union[str, list] = None,
+    extension: Union[str, list] = None,
+    create_directory: bool = False,
 ):
     """Copy files to directory
 
     Args:
-        src (Union[list, str, Path]): 'file list' or 'file' or 'directory'.
-        dst (Union[str, Path]): destination directory.
-        create_directory (bool, optional): create destination directory or not. Defaults to False.
+        src (Union[list, str, PurePath]): 'file list' or 'file' or 'directory'.
+        dst (Union[str, PurePath]): destination directory.
         recursive (bool, optional): copy recursively or not when copying directory. Defaults to True.
-        exts (Union[str, list], optional): copy only specific extension(including "."). Defaults to None.
+        extension (Union[str, list], optional): copy only specific extension(including "."). Defaults to None.
+        create_directory (bool, optional): create destination directory or not. Defaults to False.
 
     Raises:
         FileNotFoundError: if src is unknown
         ValueError: if dst is not directory format
         FileNotFoundError: if dst is not exists. you can bypass this error with create_directory argument.
     """
+    if not isinstance(src, list):
+        src = [src]
+    src = [Path(src_path).absolute() for src_path in src]
 
-    src_list = None
-    if isinstance(src, list):
-        src_prefix = os.path.commonpath(src)
-        src_list = list(map(Path, src))
-    elif isinstance(src, (str, PurePath)):
-        src = Path(src)
-        if src.is_file():
-            src_list = [src]
-            src_prefix = src.parent
-        elif src.is_dir():
-            src_list = list(src.glob("**/*" if recursive else "*"))
-            if exts:
-                if isinstance(exts, str):
-                    exts = [exts]
-                src_list = list(filter(lambda x: x.suffix in exts, src_list))
-            src_prefix = src
+    src_list = []
+    for src_path in src:
+        if Path(src_path).is_file():
+            src_list.append(Path(src_path))
+        elif Path(src_path).is_dir():
+            src_list.extend(
+                search.get_files(
+                    src_path, recursive=recursive, extension=extension
+                )
+            )
+        else:
+            raise FileNotFoundError(f"{src_path} does not exists")
 
-    if src_list is None:
-        raise FileNotFoundError(f"unknown source {src}")
+    if len(src_list) == 1:
+        src_prefix = src_list[0].parent
+    elif len(src_list) > 1:
+        src_prefix = Path(os.path.commonpath(src_list))
+    else:
+        raise FileNotFoundError("src_list is empty")
 
     dst = Path(dst)
     if dst.suffix != "":
         raise ValueError(
             f"dst should be directory format. but got {dst.suffix}"
         )
-    elif create_directory:
+
+    if create_directory:
         make_directory(dst)
 
     if not dst.exists():
@@ -140,9 +146,9 @@ def copy_files_to_directory(
         )
 
     for src_file in src_list:
-        dst_file = Path(str(src_file).replace(str(src_prefix), str(dst)))
-        make_directory(dst_file.parent)
         if src_file.is_file():
+            dst_file = Path(str(src_file).replace(str(src_prefix), str(dst)))
+            make_directory(dst_file.parent)
             shutil.copy(src_file, dst_file)
 
 
@@ -202,49 +208,61 @@ def remove_directory(src: Union[str, Path], recursive: bool = False):
 
 
 def zip(
-    src: Union[str, PurePath, list], dst: str, create_directory: bool = False
+    src: Union[str, PurePath, list],
+    dst: Union[str, PurePath],
+    recursive: bool = True,
+    extension: Union[str, list] = None,
+    create_directory: bool = False,
 ) -> str:
     """Zip file(s) or directory(s)
 
     Args:
         src (Union[str, PurePath, list]): file(s) or directory(s)
         dst (str): destination file path
+        recursive (bool, optional): zip recursively or not when zipping directory. Defaults to True.
+        extension (Union[str, list], optional): zip only specific extension(including "."). Defaults to None.
         create_directory (bool, optional): create destination directory or not. Defaults to False.
 
     Returns:
         str: destination file path
     """
+    if not isinstance(src, list):
+        src = [src]
+    src = [Path(src_path).absolute() for src_path in src]
 
-    def parse_path(src: Union[str, PurePath]) -> tuple[Path, list]:
-        if Path(src).is_file():
-            base_dir = Path(src).parent
-            file_list = [Path(src)]
-        elif Path(src).is_dir():
-            base_dir = Path(src)
-            file_list = list(Path(src).glob("**/*"))
+    src_list = []
+    for src_path in src:
+        if Path(src_path).is_file():
+            src_list.append(Path(src_path))
+        elif Path(src_path).is_dir():
+            src_list.extend(
+                search.get_files(
+                    src_path, recursive=recursive, extension=extension
+                )
+            )
         else:
-            raise FileNotFoundError(f"{src} does not exists")
-        return base_dir, file_list
+            raise FileNotFoundError(f"{src_path} does not exists")
 
-    if isinstance(src, (str, PurePath)):
-        base_dir, file_list = parse_path(src)
-    elif isinstance(src, list):
-        src = list(map(lambda x: Path(x).absolute(), src))
-        base_dir = Path(os.path.commonpath(src))
-        file_list = []
-        for file_path in src:
-            _, _file_list = parse_path(file_path)
-            file_list.extend(_file_list)
+    if len(src_list) == 1:
+        src_prefix = src_list[0].parent
+    elif len(src_list) > 1:
+        src_prefix = Path(os.path.commonpath(src_list))
+    else:
+        raise FileNotFoundError("src_list is empty")
 
     if create_directory:
         make_directory(Path(dst).parent)
 
+    if not Path(dst).parent.exists():
+        raise FileNotFoundError(
+            f"{dst} directory does not exist. please set 'create_directory' argument to be True to make directory."
+        )
+
     with zipfile.ZipFile(dst, "w") as f:
-        for file_path in file_list:
-            arcname = str(file_path.relative_to(base_dir))
+        for src_file in src_list:
             f.write(
-                file_path,
-                arcname=arcname,
+                src_file,
+                arcname=str(src_file.relative_to(src_prefix)),
                 compress_type=zipfile.ZIP_DEFLATED,
             )
 
