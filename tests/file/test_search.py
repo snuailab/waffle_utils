@@ -29,6 +29,18 @@ def test_get_files(
         )
     )
 
+    files = search.get_files(
+        dummy_directory["path"], extension=[".PNG", ".jpg"]
+    )
+    assert len(files) == len(
+        list(
+            filter(
+                lambda x: x.suffix in [".png", ".jpg"],
+                dummy_directory["file_list"],
+            )
+        )
+    )
+
 
 def test_get_image_files(
     dummy_directory,

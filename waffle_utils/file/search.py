@@ -32,6 +32,7 @@ def get_files(
     if extension:
         if isinstance(extension, str):
             extension = [extension]
+        extension = [ext.lower() for ext in extension]
         files = [file for file in files if file.suffix.lower() in extension]
 
     return natsorted(set(files))

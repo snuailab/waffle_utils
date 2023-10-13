@@ -19,7 +19,7 @@ def dummy_empty_directory(tmpdir_factory):
 def dummy_text(tmpdir_factory):
     directory = Path(tmpdir_factory.mktemp("dummy_text_file"))
     dummy_file = Path(directory) / "dummy_text_file.txt"
-    data = "dummy_text_file"
+    data = "dummy_text_line_1\n" "dummy_text_line_2\n" "dummy_text_line_3\n"
     with open(dummy_file, "w") as f:
         f.write(data)
 
