@@ -34,7 +34,7 @@ def get_files(
             extension = [extension]
         files = [file for file in files if file.suffix.lower() in extension]
 
-    return natsorted(files)
+    return natsorted(set(files))
 
 
 def get_image_files(

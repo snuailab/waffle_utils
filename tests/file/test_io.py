@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from waffle_utils.file import io, network
+from waffle_utils.file import io
 
 
 def test_save_json(dummy_json, tmpdir):

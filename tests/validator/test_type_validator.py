@@ -1,6 +1,5 @@
 from typing import Optional, Union
 
-import numpy as np
 import pytest
 
 from waffle_utils.validator import setter_type_validator, type_checker
@@ -72,15 +71,15 @@ def test_type_checker():
         test2("a")
 
     @type_checker
-    def test3(a: Union[int, float, np.ndarray]):
+    def test3(a: Union[int, float, str]):
         pass
 
     test3(1)
     test3(1.0)
-    test3(np.array([1]))
+    test3("hi")
 
     with pytest.raises(TypeError):
-        test3("a")
+        test3([])
 
     @type_checker
     def test4(a: Optional[int] = None):

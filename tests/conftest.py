@@ -1,11 +1,8 @@
 import json
-import os
 import shutil
 import zipfile
 from pathlib import Path
 
-import cv2
-import numpy as np
 import pytest
 import yaml
 
@@ -55,23 +52,18 @@ def dummy_yaml(tmpdir_factory):
 def dummy_image(tmpdir_factory):
     directory = Path(tmpdir_factory.mktemp("dummy_image_file"))
     dummy_file = Path(directory) / "dummy_image_file.png"
-    data = np.zeros((32, 32, 3), dtype=np.uint8)
-    cv2.imwrite(str(dummy_file), data)
+    dummy_file.touch()
 
-    return {"path": dummy_file, "data": data}
+    return {"path": dummy_file, "data": ""}
 
 
 @pytest.fixture(scope="session")
 def dummy_video(tmpdir_factory):
     directory = Path(tmpdir_factory.mktemp("dummy_video_file"))
     dummy_file = Path(directory) / "dummy_video_file.mp4"
-    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-    writer = cv2.VideoWriter(str(dummy_file), fourcc, 30, (32, 32))
-    for _ in range(30):
-        writer.write(np.zeros((32, 32, 3), dtype=np.uint8))
-    writer.release()
+    dummy_file.touch()
 
-    return {"path": dummy_file, "data": _}
+    return {"path": dummy_file, "data": ""}
 
 
 @pytest.fixture(scope="session")
