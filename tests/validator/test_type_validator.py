@@ -45,7 +45,7 @@ def test_setter_type_validator():
 
 
 def test_type_checker():
-    @type_checker()
+    @type_checker
     def test1(a: int, b: str, c: float = 1.0):
         pass
 
@@ -61,7 +61,7 @@ def test_type_checker():
     with pytest.raises(TypeError):
         test1(1, "a", "a")
 
-    @type_checker()
+    @type_checker
     def test2(a: Union[int, float]):
         pass
 
@@ -71,7 +71,7 @@ def test_type_checker():
     with pytest.raises(TypeError):
         test2("a")
 
-    @type_checker()
+    @type_checker
     def test3(a: Union[int, float, np.ndarray]):
         pass
 
@@ -82,7 +82,7 @@ def test_type_checker():
     with pytest.raises(TypeError):
         test3("a")
 
-    @type_checker()
+    @type_checker
     def test4(a: Optional[int] = None):
         pass
 

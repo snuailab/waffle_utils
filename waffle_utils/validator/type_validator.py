@@ -22,57 +22,51 @@ def setter_type_validator(_type: type, strict: bool = True):
     return type_check
 
 
-def type_checker():
+def type_checker(f):
     """Validate arguments
 
     Raises:
         TypeError: if strict is True and argument type is not matched, else convert type.
     """
 
-    def type_check(f):
+    # get type annotations
+    annotations = f.__annotations__
 
-        # get type annotations
-        annotations = f.__annotations__
+    # get default arguments
+    default_arguments = inspect.signature(f).parameters
+    default_arguments = {
+        key: value.default
+        for key, value in default_arguments.items()
+        if value.default is not inspect.Parameter.empty
+    }
 
-        def input_check(*args, **kwargs):
-            # get arguments
-            arguments = inspect.signature(f).bind(*args, **kwargs).arguments
+    def inner(*args, **kwargs):
+        # get arguments
+        arguments = inspect.signature(f).bind(*args, **kwargs).arguments
 
-            # get default arguments
-            default_arguments = inspect.signature(f).parameters
-            default_arguments = {
-                key: value.default
-                for key, value in default_arguments.items()
-                if value.default is not inspect.Parameter.empty
-            }
+        # update arguments
+        for key, value in default_arguments.items():
+            if key not in arguments:
+                arguments[key] = value
 
-            # update arguments
-            for key, value in default_arguments.items():
-                if key not in arguments:
-                    arguments[key] = value
+        # check arguments
+        for key, value in arguments.items():
+            if key in annotations:
+                _type = annotations[key]
+                if value is not None:
+                    # check if _type is Union or Optional
+                    if hasattr(_type, "__origin__"):
+                        if _type.__origin__ == Union:
+                            _type = _type.__args__
+                        elif _type.__origin__ == Optional:
+                            _type = _type.__args__[0]
+                        else:
+                            raise TypeError(f"Unknown type {_type} for {key}")
+                    if not isinstance(value, _type):
+                        raise TypeError(
+                            f"{key} should be {_type} type, but got {type(value)} type"
+                        )
 
-            # check arguments
-            for key, value in arguments.items():
-                if key in annotations:
-                    _type = annotations[key]
-                    if value is not None:
-                        # check if _type is Union or Optional
-                        if hasattr(_type, "__origin__"):
-                            if _type.__origin__ == Union:
-                                _type = _type.__args__
-                            elif _type.__origin__ == Optional:
-                                _type = _type.__args__[0]
-                            else:
-                                raise TypeError(
-                                    f"Unknown type {_type} for {key}"
-                                )
-                        if not isinstance(value, _type):
-                            raise TypeError(
-                                f"{key} should be {_type} type, but got {type(value)} type"
-                            )
+        return f(**arguments)
 
-            return f(**arguments)
-
-        return input_check
-
-    return type_check
+    return inner

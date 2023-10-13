@@ -8,7 +8,7 @@ from waffle_utils.image import (
     DEFAULT_IMAGE_EXTENSION,
     SUPPORTED_IMAGE_EXTENSIONS,
 )
-from waffle_utils.log import initialize_logger
+from waffle_utils.logger import initialize_logger
 from waffle_utils.video import SUPPORTED_VIDEO_EXTENSION
 from waffle_utils.video.tools import (
     DEFAULT_FRAME_RATE,
