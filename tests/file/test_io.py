@@ -1,3 +1,4 @@
+import shutil
 import zipfile
 from pathlib import Path
 
@@ -69,7 +70,7 @@ def test_copy_files_to_directory(
     io.copy_files_to_directory(
         src, dst, create_directory=True, recursive=False
     )
-    assert len(dummy_directory["tree"][1]) == len(list(dst.glob("**/*")))
+    assert len(dummy_directory["file_tree"][1]) == len(list(dst.glob("**/*")))
 
     # copy with recursive
     src = dummy_directory["path"]
@@ -92,7 +93,7 @@ def test_copy_files_to_directory(
     io.copy_files_to_directory(
         src, dst, create_directory=True, recursive=True, extension=".txt"
     )
-    assert len(list(filter(lambda x: x.is_file(), dst.glob("**/*")))) == 2
+    assert len(list(filter(lambda x: x.is_file(), dst.glob("**/*")))) == 4
 
     # copy file and directory to directory
     src = dummy_directory["file_list"] + [dummy_directory_clone["path"]]
@@ -115,6 +116,74 @@ def test_copy_file(dummy_text, tmpdir):
     dst = Path(tmpdir, "sub", "test.txt")
     io.copy_file(src, dst, create_directory=True)
     assert dst.exists()
+
+
+def test_copy_directories(dummy_directory, tmpdir):
+    src = dummy_directory["path"]
+    dst = Path(tmpdir, "test")
+
+    # copy without create_directory
+    with pytest.raises(FileNotFoundError):
+        io.copy_directories(src, dst)
+    assert not dst.exists()
+
+    # copy with create_directory
+    io.copy_directories(src, dst, create_directory=True)
+    assert len(sum(dummy_directory["directory_tree"].values(), [])) == len(
+        list(filter(lambda x: x.is_dir(), dst.glob("**/*")))
+    )
+
+
+def test_move_files(dummy_directory, dummy_directory_clone, tmpdir):
+    # move directory without create_directory
+    src = dummy_directory["path"]
+    dst = Path(tmpdir, "test1")
+
+    with pytest.raises(FileNotFoundError):
+        io.move_files(src, dst)
+    assert not dst.exists()
+
+    # move file to directory
+    src = dummy_directory["file_list"][0]
+    dst = Path(tmpdir, "test2")
+    io.move_files(src, dst, create_directory=True)
+    assert len(list(dst.glob("**/*"))) == 1
+    shutil.copytree(
+        dst, dummy_directory["path"], dirs_exist_ok=True
+    )  # restore
+
+    # move without recursive
+    src = dummy_directory["path"]
+    dst = Path(tmpdir, "test3")
+    io.move_files(src, dst, create_directory=True, recursive=False)
+    assert len(dummy_directory_clone["file_tree"][1]) == len(
+        list(dst.glob("**/*"))
+    )
+    shutil.copytree(dst, src, dirs_exist_ok=True)  # restore
+
+    # move with recursive
+    src = dummy_directory["path"]
+    dst = Path(tmpdir, "test4")
+    io.move_files(src, dst, create_directory=True, recursive=True)
+    assert dummy_directory_clone["length"] == len(
+        list(filter(lambda x: x.is_file(), dst.glob("**/*")))
+    )
+    shutil.copytree(dst, src, dirs_exist_ok=True)  # restore
+
+    # move with exts
+    src = dummy_directory["path"]
+    dst = Path(tmpdir, "test5")
+    io.move_files(
+        src, dst, create_directory=True, recursive=False, extension=".txt"
+    )
+    assert len(list(filter(lambda x: x.is_file(), dst.glob("**/*")))) == 1
+    shutil.copytree(dst, src, dirs_exist_ok=True)  # restore
+
+    io.move_files(
+        src, dst, create_directory=True, recursive=True, extension=".txt"
+    )
+    assert len(list(filter(lambda x: x.is_file(), dst.glob("**/*")))) == 4
+    shutil.copytree(dst, src, dirs_exist_ok=True)  # restore
 
 
 def test_make_directory(tmpdir):
