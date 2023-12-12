@@ -77,7 +77,7 @@ def test_copy_files_to_directory(
     dst = Path(tmpdir, "test4")
 
     io.copy_files_to_directory(src, dst, create_directory=True, recursive=True)
-    assert dummy_directory["length"] == len(
+    assert dummy_directory["file_num"] == len(
         list(filter(lambda x: x.is_file(), dst.glob("**/*")))
     )
 
@@ -102,7 +102,23 @@ def test_copy_files_to_directory(
     io.copy_files_to_directory(src, dst, create_directory=True, recursive=True)
     assert (
         len(list(filter(lambda x: x.is_file(), dst.glob("**/*"))))
-        == dummy_directory["length"] + dummy_directory_clone["length"]
+        == dummy_directory["file_num"] + dummy_directory_clone["file_num"]
+    )
+
+    # copy including directories
+    src = dummy_directory["path"]
+    dst = Path(tmpdir, "test")
+
+    io.copy_files_to_directory(
+        src,
+        dst,
+        create_directory=True,
+        recursive=True,
+        include_directories=True,
+    )
+    assert (
+        len(list(filter(lambda x: x.is_dir(), dst.glob("**/*"))))
+        == dummy_directory["dir_num"]
     )
 
 
@@ -116,22 +132,6 @@ def test_copy_file(dummy_text, tmpdir):
     dst = Path(tmpdir, "sub", "test.txt")
     io.copy_file(src, dst, create_directory=True)
     assert dst.exists()
-
-
-def test_copy_directories(dummy_directory, tmpdir):
-    src = dummy_directory["path"]
-    dst = Path(tmpdir, "test")
-
-    # copy without create_directory
-    with pytest.raises(FileNotFoundError):
-        io.copy_directories(src, dst)
-    assert not dst.exists()
-
-    # copy with create_directory
-    io.copy_directories(src, dst, create_directory=True)
-    assert len(sum(dummy_directory["directory_tree"].values(), [])) == len(
-        list(filter(lambda x: x.is_dir(), dst.glob("**/*")))
-    )
 
 
 def test_move_files(dummy_directory, dummy_directory_clone, tmpdir):
@@ -165,7 +165,7 @@ def test_move_files(dummy_directory, dummy_directory_clone, tmpdir):
     src = dummy_directory["path"]
     dst = Path(tmpdir, "test4")
     io.move_files(src, dst, create_directory=True, recursive=True)
-    assert dummy_directory_clone["length"] == len(
+    assert dummy_directory_clone["file_num"] == len(
         list(filter(lambda x: x.is_file(), dst.glob("**/*")))
     )
     shutil.copytree(dst, src, dirs_exist_ok=True)  # restore

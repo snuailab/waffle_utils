@@ -131,18 +131,27 @@ def dummy_directory(tmpdir_factory, dummy_file_list):
         + new_dummy_file_list_level3
     )
 
+    new_dummy_dir_list = (
+        new_dummy_directory_list_level1 + new_dummy_directory_list_level2
+    )
+
     return {
         "path": directory,
         "file_list": new_dummy_file_list,
         "file_relative_path_list": [
             file.relative_to(directory) for file in new_dummy_file_list
         ],
-        "length": len(new_dummy_file_list),
+        "file_num": len(new_dummy_file_list),
         "file_tree": {
             1: new_dummy_file_list_level1,
             2: new_dummy_file_list_level2,
             3: new_dummy_file_list_level3,
         },
+        "dir_list": new_dummy_dir_list,
+        "dir_relative_path_list": [
+            dir.relative_to(directory) for dir in new_dummy_dir_list
+        ],
+        "dir_num": len(new_dummy_dir_list),
         "directory_tree": {
             1: new_dummy_directory_list_level1,
             2: new_dummy_directory_list_level2,
@@ -202,18 +211,27 @@ def dummy_directory_clone(tmpdir_factory, dummy_file_list):
         + new_dummy_file_list_level3
     )
 
+    new_dummy_dir_list = (
+        new_dummy_directory_list_level1 + new_dummy_directory_list_level2
+    )
+
     return {
         "path": directory,
         "file_list": new_dummy_file_list,
         "file_relative_path_list": [
             file.relative_to(directory) for file in new_dummy_file_list
         ],
-        "length": len(new_dummy_file_list),
+        "file_num": len(new_dummy_file_list),
         "file_tree": {
             1: new_dummy_file_list_level1,
             2: new_dummy_file_list_level2,
             3: new_dummy_file_list_level3,
         },
+        "dir_list": new_dummy_dir_list,
+        "dir_relative_path_list": [
+            dir.relative_to(directory) for dir in new_dummy_dir_list
+        ],
+        "dir_num": len(new_dummy_dir_list),
         "directory_tree": {
             1: new_dummy_directory_list_level1,
             2: new_dummy_directory_list_level2,
@@ -237,6 +255,6 @@ def dummy_zip(tmpdir_factory, dummy_directory):
         "path": zip_file,
         "file_list": dummy_directory["file_list"],
         "file_relative_path_list": dummy_directory["file_relative_path_list"],
-        "length": dummy_directory["length"],
+        "file_num": dummy_directory["file_num"],
         "file_tree": dummy_directory["file_tree"],
     }

@@ -28,7 +28,8 @@ def get_files(
     directory: Union[str, Path],
     recursive: bool = True,
     extension: Union[list[str], str, None] = None,
-) -> list:
+    include_directories: bool = False,
+) -> list[Path]:
     """
     Retrieves a list of files in a directory, optionally filtered by extension.
 
@@ -36,6 +37,7 @@ def get_files(
         directory (Union[str, Path]): Path to the directory.
         recursive (bool, optional): Whether to search recursively or not. Defaults to True.
         extension (Union[list[str], str, None], optional): File extension(including ".") to filter the files by. Defaults to None.
+        include_directories (bool, optional): Whether to include directories in the list or not. Defaults to False.
 
     Returns:
         list: List of file paths.
@@ -43,12 +45,19 @@ def get_files(
     directory = Path(directory)
 
     files = directory.glob(f"**/*" if recursive else "*")
-    files = list(filter(lambda file: file.is_file(), files))
+    files = list(
+        filter(lambda file: include_directories or file.is_file(), files)
+    )
     if extension:
         if isinstance(extension, str):
             extension = [extension]
         extension = [ext.lower() for ext in extension]
-        files = [file for file in files if file.suffix.lower() in extension]
+
+        filtered_files = []
+        for file in files:
+            if file.suffix.lower() in extension or file.is_dir():
+                filtered_files.append(file)
+        files = filtered_files
 
     return natsorted(set(files))
 
@@ -80,42 +89,6 @@ def get_directories(
             files,
         )
     )
-
-    return natsorted(set(files))
-
-
-def get_files_and_directories(
-    directory: Union[str, Path],
-    recursive: bool = True,
-    extension: Union[list[str], str, None] = None,
-) -> list:
-    """
-    Retrieves a list of files and directories in a directory, optionally filtered by extension and returns only empty directories.
-
-    Args:
-        directory (Union[str, Path]): Path to the directory.
-        recursive (bool, optional): Whether to search recursively or not. Defaults to True.
-        extension (Union[list[str], str, None], optional): File extension(including ".") to filter the files by. Defaults to None.
-
-    Returns:
-        list: List of file and directory paths.
-    """
-    directory = Path(directory)
-
-    files = list(directory.glob(f"**/*" if recursive else "*"))
-    if extension:
-        if isinstance(extension, str):
-            extension = [extension]
-        extension = [ext.lower() for ext in extension]
-        files = list(
-            filter(
-                lambda file: (
-                    file.is_file() and file.suffix.lower() in extension
-                )
-                or file.is_dir(),
-                files,
-            )
-        )
 
     return natsorted(set(files))
 

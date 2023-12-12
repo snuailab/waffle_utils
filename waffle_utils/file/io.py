@@ -91,6 +91,7 @@ def copy_files_to_directory(
     dst: Union[str, PurePath],
     recursive: bool = True,
     extension: Union[str, list] = None,
+    include_directories: bool = False,
     create_directory: bool = False,
 ):
     """Copy files to directory
@@ -100,6 +101,7 @@ def copy_files_to_directory(
         dst (Union[str, PurePath]): destination directory.
         recursive (bool, optional): copy recursively or not when copying directory. Defaults to True.
         extension (Union[str, list], optional): copy only specific extension(including "."). Defaults to None.
+        include_directories (bool, optional): Whether to include directories in the list or not. Defaults to False.
         create_directory (bool, optional): create destination directory or not. Defaults to False.
 
     Raises:
@@ -118,7 +120,10 @@ def copy_files_to_directory(
         elif Path(src_path).is_dir():
             src_list.extend(
                 search.get_files(
-                    src_path, recursive=recursive, extension=extension
+                    src_path,
+                    recursive=recursive,
+                    extension=extension,
+                    include_directories=include_directories,
                 )
             )
         else:
@@ -149,6 +154,9 @@ def copy_files_to_directory(
             dst_file = Path(str(src_file).replace(str(src_prefix), str(dst)))
             make_directory(dst_file.parent)
             shutil.copy(src_file, dst_file)
+        elif src_file.is_dir():
+            dst_file = Path(str(src_file).replace(str(src_prefix), str(dst)))
+            make_directory(dst_file)
 
 
 def copy_file(
@@ -171,44 +179,6 @@ def copy_file(
         make_directory(dst.parent)
 
     shutil.copy(src, dst)
-
-
-def copy_directories(
-    src: Union[str, PurePath],
-    dst: Union[str, PurePath],
-    create_directory: bool = False,
-):
-    """Copy only directories
-
-    Args:
-        src (Union[str, PurePath]): source directory path.
-        dst (Union[str, PurePath]): destination directory path.
-        create_directory (bool, optional): create destination directory or not. Defaults to False.
-    """
-    src = Path(src)
-
-    if not src.is_dir():
-        raise ValueError(f"src should be directory. {src} is not directory.")
-
-    dst = Path(dst)
-
-    if dst.is_file():
-        raise ValueError(f"dst should be directory. {dst} is not directory.")
-
-    if create_directory:
-        make_directory(dst)
-
-    if not dst.exists():
-        raise FileNotFoundError(
-            f"{dst} directory does not exist. please set 'create_directory' argument to be True to make directory."
-        )
-
-    if not dst.is_dir():
-        raise ValueError(f"dst should be directory. {dst} is not directory.")
-
-    shutil.copytree(
-        src, dst, dirs_exist_ok=True, ignore=shutil.ignore_patterns("*.*")
-    )
 
 
 def make_directory(src: Union[str, Path]):
