@@ -138,7 +138,7 @@ def copy_files_to_directory(
 
     dst = Path(dst)
 
-    if dst.is_file():
+    if dst.exists() and dst.is_file():
         raise ValueError(f"dst should be directory. {dst} is not directory.")
 
     if create_directory:
@@ -214,19 +214,22 @@ def remove_directory(src: Union[str, Path], recursive: bool = False):
     shutil.rmtree(src)
 
 
-def move_files(
+def move_files_to_directory(
     src: Union[list, str, PurePath],
     dst: Union[str, PurePath],
     recursive: bool = True,
     extension: Union[str, list] = None,
+    include_directories: bool = False,
     create_directory: bool = False,
 ):
     """Move files
 
     Args:
         src (Union[list, str, PurePath]): 'file list' or 'file' or 'directory' or 'directory list'.
-        dst (Union[str, PurePath]): destination 'file' or 'directory' path.
+        dst (Union[str, PurePath]): destination directory.
+        recursive (bool, optional): move recursively or not when moving directory. Defaults to True.
         extension (Union[str, list], optional): move only specific extension(including "."). Defaults to None.
+        include_directories (bool, optional): Whether to include directories in the list or not. Defaults to False.
         create_directory (bool, optional): create destination directory or not. Defaults to False.
 
     Raises:
@@ -234,10 +237,9 @@ def move_files(
         ValueError: if dst is not directory format
         FileNotFoundError: if dst is not exists. you can bypass this error with create_directory argument.
     """
-
     if not isinstance(src, list):
         src = [src]
-        src = [Path(src_path).absolute() for src_path in src]
+    src = [Path(src_path).absolute() for src_path in src]
 
     src_list = []
     for src_path in src:
@@ -246,7 +248,10 @@ def move_files(
         elif Path(src_path).is_dir():
             src_list.extend(
                 search.get_files(
-                    src_path, recursive=recursive, extension=extension
+                    src_path,
+                    recursive=recursive,
+                    extension=extension,
+                    include_directories=include_directories,
                 )
             )
         else:
@@ -261,7 +266,7 @@ def move_files(
 
     dst = Path(dst)
 
-    if dst.is_file():
+    if dst.exists() and dst.is_file():
         raise ValueError(f"dst should be directory. {dst} is not directory.")
 
     if create_directory:
@@ -273,9 +278,11 @@ def move_files(
         )
 
     for src_file in src_list:
+        dst_file = Path(str(src_file).replace(str(src_prefix), str(dst)))
         if src_file.is_file():
-            dst_file = Path(str(src_file).replace(str(src_prefix), str(dst)))
             make_directory(dst_file.parent)
+            shutil.move(src_file, dst_file)
+        elif src_file.is_dir() and not dst_file.exists():
             shutil.move(src_file, dst_file)
 
 
