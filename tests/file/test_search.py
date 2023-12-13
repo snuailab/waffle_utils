@@ -1,14 +1,20 @@
 from waffle_utils.file import search
 
 
+def test_is_empty(
+    dummy_empty_directory,
+):
+    assert search.is_empty(dummy_empty_directory["path"])
+
+
 def test_get_files(
     dummy_directory,
 ):
     files = search.get_files(dummy_directory["path"])
-    assert len(files) == dummy_directory["length"]
+    assert len(files) == dummy_directory["file_num"]
 
     files = search.get_files(dummy_directory["path"], recursive=False)
-    assert len(files) == len(dummy_directory["tree"][1])
+    assert len(files) == len(dummy_directory["file_tree"][1])
 
     files = search.get_files(dummy_directory["path"], extension=".png")
     assert len(files) == len(
@@ -41,6 +47,26 @@ def test_get_files(
         )
     )
 
+    files = search.get_files(dummy_directory["path"], include_directories=True)
+    assert (
+        len(files) == dummy_directory["file_num"] + dummy_directory["dir_num"]
+    )
+
+
+def test_get_directories(
+    dummy_directory,
+):
+    files = search.get_directories(dummy_directory["path"])
+    assert sorted(files) == sorted(
+        sum(dummy_directory["directory_tree"].values(), [])
+    )
+
+    files = search.get_directories(dummy_directory["path"], recursive=False)
+    assert sorted(files) == sorted(dummy_directory["directory_tree"][1])
+
+    files = search.get_directories(dummy_directory["path"], only_empty=True)
+    assert len(files) == 1
+
 
 def test_get_image_files(
     dummy_directory,
@@ -62,7 +88,7 @@ def test_get_image_files(
             filter(
                 lambda x: x.suffix.lower()
                 in search.SUPPORTED_IMAGE_EXTENSIONS,
-                dummy_directory["tree"][1],
+                dummy_directory["file_tree"][1],
             )
         )
     )
@@ -86,7 +112,7 @@ def test_get_video_files(
         list(
             filter(
                 lambda x: x.suffix.lower() in search.SUPPORTED_VIDEO_EXTENSION,
-                dummy_directory["tree"][1],
+                dummy_directory["file_tree"][1],
             )
         )
     )

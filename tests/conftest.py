@@ -79,7 +79,7 @@ def dummy_file_list(
     ]
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def dummy_directory(tmpdir_factory, dummy_file_list):
     directory = Path(tmpdir_factory.mktemp("dummy_directory"))
 
@@ -90,17 +90,49 @@ def dummy_directory(tmpdir_factory, dummy_file_list):
             Path(directory) / Path(file_path).name
         )
 
+    new_dummy_file_list_level2 = []
+    new_dummy_directory_list_level1 = []
+    empty_directory = Path(directory) / "empty"
+    empty_directory.mkdir(exist_ok=True)
+    new_dummy_directory_list_level1.append(empty_directory)
+
     sub_directory = Path(directory) / "sub"
     sub_directory.mkdir(exist_ok=True)
-    new_dummy_file_list_level2 = []
+    new_dummy_directory_list_level1.append(sub_directory)
     for file_path in dummy_file_list:
         shutil.copy(file_path, sub_directory)
         new_dummy_file_list_level2.append(
             Path(sub_directory) / Path(file_path).name
         )
 
+    sub2_directory = Path(directory) / "sub2"
+    sub2_directory.mkdir(exist_ok=True)
+    new_dummy_directory_list_level1.append(sub2_directory)
+    for file_path in dummy_file_list:
+        shutil.copy(file_path, sub2_directory)
+        new_dummy_file_list_level2.append(
+            Path(sub2_directory) / Path(file_path).name
+        )
+
+    new_dummy_file_list_level3 = []
+    new_dummy_directory_list_level2 = []
+    level3_directory = Path(sub_directory) / "sub"
+    level3_directory.mkdir(exist_ok=True)
+    new_dummy_directory_list_level2.append(level3_directory)
+    for file_path in dummy_file_list:
+        shutil.copy(file_path, level3_directory)
+        new_dummy_file_list_level3.append(
+            Path(level3_directory) / Path(file_path).name
+        )
+
     new_dummy_file_list = (
-        new_dummy_file_list_level1 + new_dummy_file_list_level2
+        new_dummy_file_list_level1
+        + new_dummy_file_list_level2
+        + new_dummy_file_list_level3
+    )
+
+    new_dummy_dir_list = (
+        new_dummy_directory_list_level1 + new_dummy_directory_list_level2
     )
 
     return {
@@ -109,12 +141,25 @@ def dummy_directory(tmpdir_factory, dummy_file_list):
         "file_relative_path_list": [
             file.relative_to(directory) for file in new_dummy_file_list
         ],
-        "length": len(new_dummy_file_list),
-        "tree": {1: new_dummy_file_list_level1, 2: new_dummy_file_list_level2},
+        "file_num": len(new_dummy_file_list),
+        "file_tree": {
+            1: new_dummy_file_list_level1,
+            2: new_dummy_file_list_level2,
+            3: new_dummy_file_list_level3,
+        },
+        "dir_list": new_dummy_dir_list,
+        "dir_relative_path_list": [
+            dir.relative_to(directory) for dir in new_dummy_dir_list
+        ],
+        "dir_num": len(new_dummy_dir_list),
+        "directory_tree": {
+            1: new_dummy_directory_list_level1,
+            2: new_dummy_directory_list_level2,
+        },
     }
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def dummy_directory_clone(tmpdir_factory, dummy_file_list):
     directory = Path(tmpdir_factory.mktemp("dummy_directory"))
 
@@ -125,17 +170,49 @@ def dummy_directory_clone(tmpdir_factory, dummy_file_list):
             Path(directory) / Path(file_path).name
         )
 
+    new_dummy_file_list_level2 = []
+    new_dummy_directory_list_level1 = []
+    empty_directory = Path(directory) / "empty"
+    empty_directory.mkdir(exist_ok=True)
+    new_dummy_directory_list_level1.append(empty_directory)
+
     sub_directory = Path(directory) / "sub"
     sub_directory.mkdir(exist_ok=True)
-    new_dummy_file_list_level2 = []
+    new_dummy_directory_list_level1.append(sub_directory)
     for file_path in dummy_file_list:
         shutil.copy(file_path, sub_directory)
         new_dummy_file_list_level2.append(
             Path(sub_directory) / Path(file_path).name
         )
 
+    sub2_directory = Path(directory) / "sub2"
+    sub2_directory.mkdir(exist_ok=True)
+    new_dummy_directory_list_level1.append(sub2_directory)
+    for file_path in dummy_file_list:
+        shutil.copy(file_path, sub2_directory)
+        new_dummy_file_list_level2.append(
+            Path(sub2_directory) / Path(file_path).name
+        )
+
+    new_dummy_file_list_level3 = []
+    new_dummy_directory_list_level2 = []
+    level3_directory = Path(sub_directory) / "sub"
+    level3_directory.mkdir(exist_ok=True)
+    new_dummy_directory_list_level2.append(level3_directory)
+    for file_path in dummy_file_list:
+        shutil.copy(file_path, level3_directory)
+        new_dummy_file_list_level3.append(
+            Path(level3_directory) / Path(file_path).name
+        )
+
     new_dummy_file_list = (
-        new_dummy_file_list_level1 + new_dummy_file_list_level2
+        new_dummy_file_list_level1
+        + new_dummy_file_list_level2
+        + new_dummy_file_list_level3
+    )
+
+    new_dummy_dir_list = (
+        new_dummy_directory_list_level1 + new_dummy_directory_list_level2
     )
 
     return {
@@ -144,12 +221,25 @@ def dummy_directory_clone(tmpdir_factory, dummy_file_list):
         "file_relative_path_list": [
             file.relative_to(directory) for file in new_dummy_file_list
         ],
-        "length": len(new_dummy_file_list),
-        "tree": {1: new_dummy_file_list_level1, 2: new_dummy_file_list_level2},
+        "file_num": len(new_dummy_file_list),
+        "file_tree": {
+            1: new_dummy_file_list_level1,
+            2: new_dummy_file_list_level2,
+            3: new_dummy_file_list_level3,
+        },
+        "dir_list": new_dummy_dir_list,
+        "dir_relative_path_list": [
+            dir.relative_to(directory) for dir in new_dummy_dir_list
+        ],
+        "dir_num": len(new_dummy_dir_list),
+        "directory_tree": {
+            1: new_dummy_directory_list_level1,
+            2: new_dummy_directory_list_level2,
+        },
     }
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def dummy_zip(tmpdir_factory, dummy_directory):
     directory = Path(tmpdir_factory.mktemp("dummy_zip_file"))
     zip_file = Path(directory) / "dummy_zip_file.zip"
@@ -165,6 +255,6 @@ def dummy_zip(tmpdir_factory, dummy_directory):
         "path": zip_file,
         "file_list": dummy_directory["file_list"],
         "file_relative_path_list": dummy_directory["file_relative_path_list"],
-        "length": dummy_directory["length"],
-        "tree": dummy_directory["tree"],
+        "file_num": dummy_directory["file_num"],
+        "file_tree": dummy_directory["file_tree"],
     }
