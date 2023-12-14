@@ -4,9 +4,7 @@
 #
 import warnings
 from enum import Enum
-from typing import List, Optional
-
-from typing_extensions import Literal
+from typing import List, Literal, Optional
 
 
 class StrEnum(str, Enum):
