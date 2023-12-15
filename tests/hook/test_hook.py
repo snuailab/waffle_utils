@@ -8,7 +8,8 @@ def test_run_hook():
     data = {}
 
     class Foo(BaseHook):
-        pass
+        def on_event_1(self):
+            data["default_event_1"] = True
 
     class CustomCallback1(BaseCallback):
         def on_event_1(self, *args, **kwargs):
@@ -21,37 +22,41 @@ def test_run_hook():
     #
     data.clear()
     foo = Foo(callbacks=[CustomCallback1()])
-    foo.run_hook("on_event_1")
+    foo.run_default_hook("on_event_1")
+    assert "default_event_1" in data
+    assert "event_1" not in data
+
+    foo.run_callback_hooks("on_event_1")
     assert "event_1" in data
 
-    foo.run_hook("on_event_2")
+    foo.run_callback_hooks("on_event_2")
     assert "event_2" not in data
 
     #
     data.clear()
     foo = Foo(callbacks=[CustomCallback1(), CustomCallback2()])
-    foo.run_hook("on_event_1")
+    foo.run_callback_hooks("on_event_1")
     assert "event_1" in data
 
-    foo.run_hook("on_event_2")
+    foo.run_callback_hooks("on_event_2")
     assert "event_2" in data
 
     #
     data.clear()
     foo = Foo(callbacks=[CustomCallback1()])
-    foo.run_hook("on_event_1")
+    foo.run_callback_hooks("on_event_1")
     assert "event_1" in data
 
-    foo.run_hook("on_event_2")
+    foo.run_callback_hooks("on_event_2")
     assert "event_2" not in data
 
     foo.register_callback(CustomCallback2())
-    foo.run_hook("on_event_2")
+    foo.run_callback_hooks("on_event_2")
     assert "event_2" in data
 
     data.clear()
     foo.unregister_callback(1)
-    foo.run_hook("on_event_2")
+    foo.run_callback_hooks("on_event_2")
     assert "event_2" not in data
 
 
