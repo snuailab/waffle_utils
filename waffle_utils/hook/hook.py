@@ -33,9 +33,15 @@ class BaseHook:
                 return True
         return False
 
-    def run_hook(self, hook_name, *args, **kwargs):
-        """Run a hook."""
+    def run_callback_hooks(self, hook_name, *args, **kwargs):
+        """Run callback hooks."""
         for callback in self.callbacks:
             fn = getattr(callback, hook_name, None)
             if fn is not None:
                 fn(*args, **kwargs)
+
+    def run_default_hook(self, hook_name, *args, **kwargs):
+        """Run default hook."""
+        fn = getattr(self, hook_name, None)
+        if fn is not None:
+            fn(*args, **kwargs)
