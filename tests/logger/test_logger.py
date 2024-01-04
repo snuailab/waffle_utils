@@ -15,7 +15,6 @@ def test_initialize_logger(tmpdir):
         file_level=logging.DEBUG,
         root_level=logging.DEBUG,
     )
-
     logger = logging.getLogger()
 
     logger.info("test")
@@ -24,3 +23,13 @@ def test_initialize_logger(tmpdir):
     with open(tmpdir.join("test.log")) as f:
         lines = f.readlines()
         assert len(lines) == 2
+
+    initialize_logger(
+        console_level=logging.DEBUG,
+        file_level=logging.DEBUG,
+        root_level=logging.DEBUG,
+    )
+    logger = logging.getLogger()
+
+    logger.info("test")
+    logger.debug("test")
