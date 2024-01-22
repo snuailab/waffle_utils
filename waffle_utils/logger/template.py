@@ -35,7 +35,7 @@ class CustomColorFormatter(logging.Formatter):
 
 
 def initialize_logger(
-    file_path: Union[str, Path],
+    file_path: Union[str, Path] = None,
     log_format: str = "%(asctime)s [%(levelname)s] %(name)s:%(lineno)d: %(message)s",
     console_level: LogLevel = logging.INFO,
     file_level: LogLevel = logging.INFO,
@@ -48,7 +48,7 @@ def initialize_logger(
     """Initialize logger
 
     Args:
-        file_path (Union[str, Path]): log file path
+        file_path (Union[str, Path], optional): path to log file. Defaults to None.
         console_level (LogLevel, optional): log level for console. Defaults to INFO.
         file_level (LogLevel, optional): log level for file. Defaults to INFO.
         root_level (LogLevel, optional): log level for root. Defaults to INFO.
@@ -57,11 +57,6 @@ def initialize_logger(
         when (str, optional): when for log file. Defaults to "D".
         interval (int, optional): interval for log file. Defaults to 1.
     """
-
-    # Create the log folder for the log file
-    file_path = Path(file_path)
-    io.make_directory(file_path.parent)
-
     # Define the root logger
     root_logger = logging.getLogger()
     root_logger.setLevel(root_level)
@@ -74,20 +69,21 @@ def initialize_logger(
     console_handler.setLevel(console_level)
     console_handler.setFormatter(formatter)
 
-    # add color formatter
-
-    # Define the file handler
-    file_handler = logging.handlers.TimedRotatingFileHandler(
-        filename=str(file_path),
-        when=when,
-        interval=interval,
-        backupCount=backup_count,
-        encoding=encoding,
-    )
-    file_handler.setLevel(file_level)
-    file_handler.setFormatter(formatter)
-
     # Add Handler
     root_logger.handlers = []
     root_logger.addHandler(console_handler)
-    root_logger.addHandler(file_handler)
+
+    # Define the file handler
+    if file_path is not None:
+        file_path = Path(file_path)
+        io.make_directory(file_path.parent)
+        file_handler = logging.handlers.TimedRotatingFileHandler(
+            filename=str(file_path),
+            when=when,
+            interval=interval,
+            backupCount=backup_count,
+            encoding=encoding,
+        )
+        file_handler.setLevel(file_level)
+        file_handler.setFormatter(formatter)
+        root_logger.addHandler(file_handler)
