@@ -92,6 +92,7 @@ def copy_files_to_directory(
     recursive: bool = True,
     extension: Union[str, list] = None,
     include_directories: bool = False,
+    include_root_directory: bool = False,
     create_directory: bool = False,
 ):
     """Copy files to directory
@@ -102,6 +103,7 @@ def copy_files_to_directory(
         recursive (bool, optional): copy recursively or not when copying directory. Defaults to True.
         extension (Union[str, list], optional): copy only specific extension(including "."). Defaults to None.
         include_directories (bool, optional): Whether to include directories in the list or not. Defaults to False.
+        include_root_directory (bool, optional): whether to include root(parents) directory or not. Defaults to False.
         create_directory (bool, optional): create destination directory or not. Defaults to False.
 
     Raises:
@@ -113,27 +115,41 @@ def copy_files_to_directory(
         src = [src]
     src = [Path(src_path).absolute() for src_path in src]
 
+    src_is_file_list = [
+        src_path for src_path in src if Path(src_path).is_file()
+    ]
+
     src_list = []
     for src_path in src:
         if Path(src_path).is_file():
-            src_list.append(Path(src_path))
+            if len(src_is_file_list) > 1 and include_root_directory:
+                common_path = Path(os.path.commonpath(src_is_file_list))
+                src_list.append(
+                    (common_path, src_path.relative_to(common_path))
+                )
+            else:
+                src_list.append((src_path, src_path.relative_to(src_path)))
         elif Path(src_path).is_dir():
             src_list.extend(
-                search.get_files(
-                    src_path,
-                    recursive=recursive,
-                    extension=extension,
-                    include_directories=include_directories,
-                )
+                [
+                    (
+                        src_path.parents[0],
+                        Path(src_path.stem) / p.relative_to(src_path),
+                    )
+                    if include_root_directory
+                    else (src_path, p.relative_to(src_path))
+                    for p in search.get_files(
+                        src_path,
+                        recursive=recursive,
+                        extension=extension,
+                        include_directories=include_directories,
+                    )
+                ]
             )
         else:
             raise FileNotFoundError(f"{src_path} does not exists")
 
-    if len(src_list) == 1:
-        src_prefix = src_list[0].parent
-    elif len(src_list) > 1:
-        src_prefix = Path(os.path.commonpath(src_list))
-    else:
+    if src_list == []:
         raise FileNotFoundError("src_list is empty")
 
     dst = Path(dst)
@@ -150,12 +166,13 @@ def copy_files_to_directory(
         )
 
     for src_file in src_list:
-        if src_file.is_file():
-            dst_file = Path(str(src_file).replace(str(src_prefix), str(dst)))
+        src_file_path = src_file[0] / src_file[1]
+        if src_file_path.is_file():
+            dst_file = dst / src_file[1]
             make_directory(dst_file.parent)
-            shutil.copy(src_file, dst_file)
-        elif src_file.is_dir():
-            dst_file = Path(str(src_file).replace(str(src_prefix), str(dst)))
+            shutil.copy(src_file_path, dst_file)
+        elif src_file_path.is_dir():
+            dst_file = dst / src_file[1]
             make_directory(dst_file)
 
 
@@ -220,6 +237,7 @@ def move_files_to_directory(
     recursive: bool = True,
     extension: Union[str, list] = None,
     include_directories: bool = False,
+    include_root_directory: bool = False,
     create_directory: bool = False,
 ):
     """Move files
@@ -230,6 +248,7 @@ def move_files_to_directory(
         recursive (bool, optional): move recursively or not when moving directory. Defaults to True.
         extension (Union[str, list], optional): move only specific extension(including "."). Defaults to None.
         include_directories (bool, optional): Whether to include directories in the list or not. Defaults to False.
+        include_root_directory (bool, optional): whether to include root(parents) directory or not. Defaults to False.
         create_directory (bool, optional): create destination directory or not. Defaults to False.
 
     Raises:
@@ -241,27 +260,41 @@ def move_files_to_directory(
         src = [src]
     src = [Path(src_path).absolute() for src_path in src]
 
+    src_is_file_list = [
+        src_path for src_path in src if Path(src_path).is_file()
+    ]
+
     src_list = []
     for src_path in src:
         if Path(src_path).is_file():
-            src_list.append(Path(src_path))
+            if len(src_is_file_list) > 1 and include_root_directory:
+                common_path = Path(os.path.commonpath(src_is_file_list))
+                src_list.append(
+                    (common_path, src_path.relative_to(common_path))
+                )
+            else:
+                src_list.append((src_path, src_path.relative_to(src_path)))
         elif Path(src_path).is_dir():
             src_list.extend(
-                search.get_files(
-                    src_path,
-                    recursive=recursive,
-                    extension=extension,
-                    include_directories=include_directories,
-                )
+                [
+                    (
+                        src_path.parents[0],
+                        Path(src_path.stem) / p.relative_to(src_path),
+                    )
+                    if include_root_directory
+                    else (src_path, p.relative_to(src_path))
+                    for p in search.get_files(
+                        src_path,
+                        recursive=recursive,
+                        extension=extension,
+                        include_directories=include_directories,
+                    )
+                ]
             )
         else:
             raise FileNotFoundError(f"{src_path} does not exists")
 
-    if len(src_list) == 1:
-        src_prefix = src_list[0].parent
-    elif len(src_list) > 1:
-        src_prefix = Path(os.path.commonpath(src_list))
-    else:
+    if src_list == []:
         raise FileNotFoundError("src_list is empty")
 
     dst = Path(dst)
@@ -278,12 +311,19 @@ def move_files_to_directory(
         )
 
     for src_file in src_list:
-        dst_file = Path(str(src_file).replace(str(src_prefix), str(dst)))
-        if src_file.is_file():
+        src_file_path = src_file[0] / src_file[1]
+        dst_file = dst / src_file[1]
+
+        if (
+            dst_file.suffix == "" and not include_directories
+        ):  # if dst_file is directory
+            dst_file = dst_file / src_file[0].name
+
+        if src_file_path.is_file():
             make_directory(dst_file.parent)
-            shutil.move(src_file, dst_file)
-        elif src_file.is_dir() and not dst_file.exists():
-            shutil.move(src_file, dst_file)
+            shutil.move(src_file_path, dst_file)
+        elif src_file_path.is_dir() and not dst_file.exists():
+            shutil.move(src_file_path, dst_file)
 
 
 def zip(
