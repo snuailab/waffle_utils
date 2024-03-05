@@ -105,11 +105,135 @@ def test_copy_files_to_directory(
         )
     )
 
-    # copy file and directory to directory
-    src = dummy_directory["file_list"] + [dummy_directory_clone["path"]]
-    dst = Path(tmpdir, "test6")
+    # copy file with including root directory
+    src = dummy_directory["file_tree"][1][0]
+    dst1 = Path(tmpdir, "test6-1")
+    io.copy_files_to_directory(
+        src, dst1, create_directory=True, include_root_directory=True
+    )
+    assert len(list(filter(lambda x: x.is_file(), dst1.glob("**/*")))) == 1
+    src = dummy_directory_clone["file_tree"][3][0]
+    dst2 = Path(tmpdir, "test6-2")
+    io.copy_files_to_directory(
+        src, dst2, create_directory=True, include_root_directory=True
+    )
+    assert len(list(filter(lambda x: x.is_file(), dst2.glob("**/*")))) == 1
+    assert sorted([p.relative_to(dst1) for p in dst1.glob("**/*")]) == sorted(
+        [p.relative_to(dst2) for p in dst2.glob("**/*")]
+    )
 
+    # copy files with including root directory
+    src = dummy_directory["file_tree"][1]
+    dst1 = Path(tmpdir, "test7-1")
+    io.copy_files_to_directory(
+        src, dst1, create_directory=True, include_root_directory=True
+    )
+    assert len(list(filter(lambda x: x.is_file(), dst1.glob("**/*")))) == len(
+        src
+    )
+    src = dummy_directory["file_tree"][3]
+    dst2 = Path(tmpdir, "test7-2")
+    io.copy_files_to_directory(
+        src, dst2, create_directory=True, include_root_directory=True
+    )
+    assert len(list(filter(lambda x: x.is_file(), dst2.glob("**/*")))) == len(
+        src
+    )
+    assert sorted([p.relative_to(dst1) for p in dst1.glob("**/*")]) == sorted(
+        [p.relative_to(dst2) for p in dst2.glob("**/*")]
+    )
+
+    src = dummy_directory["file_tree"][1] + dummy_directory["file_tree"][2]
+    dst3 = Path(tmpdir, "test7-3")
+    io.copy_files_to_directory(
+        src, dst3, create_directory=True, include_root_directory=True
+    )
+    assert len(list(filter(lambda x: x.is_file(), dst3.glob("**/*")))) == len(
+        src
+    )
+    src = dummy_directory["file_tree"][1] + dummy_directory["file_tree"][3]
+    dst4 = Path(tmpdir, "test7-4")
+    io.copy_files_to_directory(
+        src, dst4, create_directory=True, include_root_directory=True
+    )
+    assert len(list(filter(lambda x: x.is_file(), dst4.glob("**/*")))) == len(
+        src
+    )
+    assert sorted([p.relative_to(dst3) for p in dst3.glob("**/*")]) != sorted(
+        [p.relative_to(dst4) for p in dst4.glob("**/*")]
+    )  # different root directory
+    assert (
+        len(
+            set(
+                [p.relative_to(dst3) for p in dst3.glob("**/*") if p.is_file()]
+                + [
+                    p.relative_to(dst4)
+                    for p in dst4.glob("**/*")
+                    if p.is_file()
+                ]
+            )
+        )
+        == dummy_directory["file_num"]
+    )  # no duplicate
+
+    # copy directory to directory without including root directory
+    src = dummy_directory["path"]
+    dst = Path(tmpdir, "test8")
     io.copy_files_to_directory(src, dst, create_directory=True, recursive=True)
+    assert (
+        len(list(filter(lambda x: x.is_file(), dst.glob("**/*"))))
+        == dummy_directory["file_num"]
+    )
+    assert sorted(
+        [p.relative_to(dst) for p in dst.glob("**/*") if p.is_file()]
+    ) == sorted(dummy_directory["file_relative_path_list"])
+
+    # copy directory to directory with including root directory
+    src = dummy_directory["path"]
+    dst = Path(tmpdir, "test9")
+    io.copy_files_to_directory(
+        src,
+        dst,
+        create_directory=True,
+        recursive=True,
+        include_root_directory=True,
+    )
+    assert (
+        len(list(filter(lambda x: x.is_file(), dst.glob("**/*"))))
+        == dummy_directory["file_num"]
+    )
+    assert sorted(
+        [p.relative_to(dst) for p in dst.glob("**/*") if p.is_file()]
+    ) == sorted(
+        [
+            Path(dummy_directory["path"].stem) / rel_p
+            for rel_p in dummy_directory["file_relative_path_list"]
+        ]
+    )
+
+    # copy files and directory to directory
+    src = dummy_directory["file_list"] + [dummy_directory_clone["path"]]
+    dst = Path(tmpdir, "test10")
+    io.copy_files_to_directory(src, dst, create_directory=True, recursive=True)
+    assert (
+        len(list(filter(lambda x: x.is_file(), dst.glob("**/*"))))
+        == dummy_directory["file_num"]
+    )
+    assert (
+        len(list(filter(lambda x: x.is_file(), dst.glob("**/*"))))
+        == dummy_directory_clone["file_num"]
+    )
+
+    # copy files and directory to directory with including root directory
+    src = dummy_directory["file_list"] + [dummy_directory_clone["path"]]
+    dst = Path(tmpdir, "test11")
+    io.copy_files_to_directory(
+        src,
+        dst,
+        create_directory=True,
+        recursive=True,
+        include_root_directory=True,
+    )
     assert (
         len(list(filter(lambda x: x.is_file(), dst.glob("**/*"))))
         == dummy_directory["file_num"] + dummy_directory_clone["file_num"]
@@ -117,8 +241,7 @@ def test_copy_files_to_directory(
 
     # copy including directories
     src = dummy_directory["path"]
-    dst = Path(tmpdir, "test")
-
+    dst = Path(tmpdir, "test12")
     io.copy_files_to_directory(
         src,
         dst,
@@ -261,25 +384,151 @@ def test_move_files(dummy_directory, tmpdir):
         list(filter(lambda x: x.suffix == ".txt", src["file_list"]))
     )
 
-    # move file and directory to directory
-    src1 = dummy_factory(Path(tmpdir, "src7_1"))
-    src2 = dummy_factory(Path(tmpdir, "src7_2"))
-    dst = Path(tmpdir, "test7")
-
+    # move file with including root directory
+    src = dummy_factory(Path(tmpdir, "src7-1"))["file_tree"][1][0]
+    dst1 = Path(tmpdir, "test7-1")
     io.move_files_to_directory(
-        src1["file_list"] + [src2["path"]],
+        src, dst1, create_directory=True, include_root_directory=True
+    )
+    assert len(list(filter(lambda x: x.is_file(), dst1.glob("**/*")))) == 1
+    src = dummy_factory(Path(tmpdir, "src7-2"))["file_tree"][3][0]
+    dst2 = Path(tmpdir, "test7-2")
+    io.move_files_to_directory(
+        src, dst2, create_directory=True, include_root_directory=True
+    )
+    assert len(list(filter(lambda x: x.is_file(), dst2.glob("**/*")))) == 1
+    assert sorted([p.relative_to(dst1) for p in dst1.glob("**/*")]) == sorted(
+        [p.relative_to(dst2) for p in dst2.glob("**/*")]
+    )
+
+    # move files with including root directory
+    src = dummy_factory(Path(tmpdir, "src8-1"))["file_tree"][1]
+    dst1 = Path(tmpdir, "test8-1")
+    io.move_files_to_directory(
+        src, dst1, create_directory=True, include_root_directory=True
+    )
+    assert len(list(filter(lambda x: x.is_file(), dst1.glob("**/*")))) == len(
+        src
+    )
+    src = dummy_factory(Path(tmpdir, "src8-2"))["file_tree"][3]
+    dst2 = Path(tmpdir, "test8-2")
+    io.move_files_to_directory(
+        src, dst2, create_directory=True, include_root_directory=True
+    )
+    assert len(list(filter(lambda x: x.is_file(), dst2.glob("**/*")))) == len(
+        src
+    )
+    assert sorted([p.relative_to(dst1) for p in dst1.glob("**/*")]) == sorted(
+        [p.relative_to(dst2) for p in dst2.glob("**/*")]
+    )
+
+    dummy = dummy_factory(Path(tmpdir, "src8-3"))
+    src = dummy["file_tree"][1] + dummy["file_tree"][2]
+    dst3 = Path(tmpdir, "test8-3")
+    io.move_files_to_directory(
+        src, dst3, create_directory=True, include_root_directory=True
+    )
+    assert len(list(filter(lambda x: x.is_file(), dst3.glob("**/*")))) == len(
+        src
+    )
+    dummy = dummy_factory(Path(tmpdir, "src8-4"))
+    src = dummy["file_tree"][1] + dummy["file_tree"][3]
+    dst4 = Path(tmpdir, "test8-4")
+    io.move_files_to_directory(
+        src, dst4, create_directory=True, include_root_directory=True
+    )
+    assert len(list(filter(lambda x: x.is_file(), dst4.glob("**/*")))) == len(
+        src
+    )
+    assert sorted([p.relative_to(dst3) for p in dst3.glob("**/*")]) != sorted(
+        [p.relative_to(dst4) for p in dst4.glob("**/*")]
+    )  # different root directory
+    assert (
+        len(
+            set(
+                [p.relative_to(dst3) for p in dst3.glob("**/*") if p.is_file()]
+                + [
+                    p.relative_to(dst4)
+                    for p in dst4.glob("**/*")
+                    if p.is_file()
+                ]
+            )
+        )
+        == dummy["file_num"]
+    )  # no duplicate
+
+    # move directory to directory without including root directory
+    dummy = dummy_factory(Path(tmpdir, "src9"))
+    src = dummy["path"]
+    dst = Path(tmpdir, "test9")
+    io.move_files_to_directory(src, dst, create_directory=True, recursive=True)
+    assert (
+        len(list(filter(lambda x: x.is_file(), dst.glob("**/*"))))
+        == dummy["file_num"]
+    )
+    assert sorted(
+        [p.relative_to(dst) for p in dst.glob("**/*") if p.is_file()]
+    ) == sorted(dummy["file_relative_path_list"])
+
+    # move directory to directory with including root directory
+    dummy = dummy_factory(Path(tmpdir, "src10"))
+    src = dummy["path"]
+    dst = Path(tmpdir, "test10")
+    io.move_files_to_directory(
+        src,
         dst,
         create_directory=True,
         recursive=True,
+        include_root_directory=True,
     )
     assert (
         len(list(filter(lambda x: x.is_file(), dst.glob("**/*"))))
-        == src1["file_num"] + src2["file_num"]
+        == dummy["file_num"]
+    )
+    assert sorted(
+        [p.relative_to(dst) for p in dst.glob("**/*") if p.is_file()]
+    ) == sorted(
+        [
+            Path(dummy["path"].stem) / rel_p
+            for rel_p in dummy["file_relative_path_list"]
+        ]
+    )
+
+    # move files and directory to directory
+    dummy1 = dummy_factory(Path(tmpdir, "src11-1"))
+    dummy2 = dummy_factory(Path(tmpdir, "src11-2"))
+    src = dummy1["file_list"] + [dummy2["path"]]
+    dst = Path(tmpdir, "test11")
+    io.move_files_to_directory(src, dst, create_directory=True, recursive=True)
+    assert (
+        len(list(filter(lambda x: x.is_file(), dst.glob("**/*"))))
+        == dummy1["file_num"]
+    )
+    assert (
+        len(list(filter(lambda x: x.is_file(), dst.glob("**/*"))))
+        == dummy2["file_num"]
+    )
+
+    # move files and directory to directory with including root directory
+    dummy1 = dummy_factory(Path(tmpdir, "src12-1"))
+    dummy2 = dummy_factory(Path(tmpdir, "src12-2"))
+    src = dummy1["file_list"] + [dummy2["path"]]
+    dst = Path(tmpdir, "test12")
+    io.move_files_to_directory(
+        src,
+        dst,
+        create_directory=True,
+        recursive=True,
+        include_root_directory=True,
+    )
+    assert (
+        len(list(filter(lambda x: x.is_file(), dst.glob("**/*"))))
+        == dummy1["file_num"] + dummy2["file_num"]
     )
 
     # move including directories
-    src = dummy_factory(Path(tmpdir, "src8"))
-    dst = Path(tmpdir, "test8")
+    src = dummy_factory(Path(tmpdir, "src13"))
+    dst = Path(tmpdir, "test13")
 
     io.move_files_to_directory(
         src["path"],
